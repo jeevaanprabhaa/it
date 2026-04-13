@@ -6,10 +6,14 @@ import TradesPanel from './components/TradesPanel';
 import OrderPanel from './components/OrderPanel';
 import JournalModal from './components/JournalModal';
 import JournalTab from './components/JournalTab';
+import HeatmapPage from './components/HeatmapPage';
 import { useMarketData } from './hooks/useMarketData';
 import { SYMBOLS, INTERVALS, Order, Emotion, MarketCondition } from './types';
 
+type Page = 'terminal' | 'heatmap';
+
 const App: React.FC = () => {
+  const [page, setPage] = useState<Page>('terminal');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
   const [bottomTab, setBottomTab] = useState<'securities' | 'orders' | 'trades' | 'buysell' | 'journal'>('securities');
@@ -76,10 +80,29 @@ const App: React.FC = () => {
     return t.charAt(0).toUpperCase() + t.slice(1);
   };
 
+  if (page === 'heatmap') {
+    return (
+      <HeatmapPage
+        onSelectSymbol={sym => { setSymbol(sym); }}
+        onNavigateHome={() => setPage('terminal')}
+      />
+    );
+  }
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#1a1a2e', color: '#e0e0e0' }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '6px 12px', background: '#16213e', borderBottom: '1px solid #2a2a4e', gap: 12, flexShrink: 0 }}>
         <div style={{ fontWeight: 700, fontSize: 16, color: '#4fc3f7', marginRight: 8 }}>S# Terminal</div>
+        <button
+          onClick={() => setPage('heatmap')}
+          style={{
+            background: 'transparent', border: '1px solid #3a3a5e', borderRadius: 6,
+            color: '#9090b0', padding: '3px 10px', cursor: 'pointer', fontSize: 12,
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}
+        >
+          🗺 Heatmap
+        </button>
         {isDemo && (
           <span style={{ padding: '2px 8px', background: '#ff980020', border: '1px solid #ff9800', borderRadius: 12, fontSize: 11, color: '#ff9800' }}>
             DEMO

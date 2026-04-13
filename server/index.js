@@ -89,6 +89,63 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
+const HEATMAP_SYMBOLS = [
+  'BTCUSDT','ETHUSDT','BNBUSDT','SOLUSDT','XRPUSDT','DOGEUSDT','ADAUSDT',
+  'AVAXUSDT','DOTUSDT','MATICUSDT','LINKUSDT','UNIUSDT','LTCUSDT','ATOMUSDT',
+  'ETCUSDT','XLMUSDT','ALGOUSDT','NEARUSDT','FTMUSDT','SANDUSDT',
+];
+
+const HEATMAP_DISPLAY = {
+  BTCUSDT:'BTC', ETHUSDT:'ETH', BNBUSDT:'BNB', SOLUSDT:'SOL', XRPUSDT:'XRP',
+  DOGEUSDT:'DOGE', ADAUSDT:'ADA', AVAXUSDT:'AVAX', DOTUSDT:'DOT', MATICUSDT:'MATIC',
+  LINKUSDT:'LINK', UNIUSDT:'UNI', LTCUSDT:'LTC', ATOMUSDT:'ATOM', ETCUSDT:'ETC',
+  XLMUSDT:'XLM', ALGOUSDT:'ALGO', NEARUSDT:'NEAR', FTMUSDT:'FTM', SANDUSDT:'SAND',
+};
+
+function generateHeatmapDemo() {
+  const basePrices = {
+    BTCUSDT: 43500, ETHUSDT: 2280, BNBUSDT: 310, SOLUSDT: 98, XRPUSDT: 0.62,
+    DOGEUSDT: 0.085, ADAUSDT: 0.48, AVAXUSDT: 35, DOTUSDT: 7.2, MATICUSDT: 0.9,
+    LINKUSDT: 14.5, UNIUSDT: 7.8, LTCUSDT: 72, ATOMUSDT: 9.5, ETCUSDT: 26,
+    XLMUSDT: 0.12, ALGOUSDT: 0.18, NEARUSDT: 2.8, FTMUSDT: 0.55, SANDUSDT: 0.45,
+  };
+  const baseVolumes = {
+    BTCUSDT: 28e9, ETHUSDT: 14e9, BNBUSDT: 3.2e9, SOLUSDT: 5.1e9, XRPUSDT: 4.8e9,
+    DOGEUSDT: 2.1e9, ADAUSDT: 1.4e9, AVAXUSDT: 1.8e9, DOTUSDT: 0.9e9, MATICUSDT: 1.1e9,
+    LINKUSDT: 0.8e9, UNIUSDT: 0.4e9, LTCUSDT: 0.7e9, ATOMUSDT: 0.5e9, ETCUSDT: 0.6e9,
+    XLMUSDT: 0.35e9, ALGOUSDT: 0.28e9, NEARUSDT: 0.45e9, FTMUSDT: 0.32e9, SANDUSDT: 0.3e9,
+  };
+  return HEATMAP_SYMBOLS.map(sym => {
+    const base = basePrices[sym] || 1;
+    const change = parseFloat(((Math.random() - 0.48) * 12).toFixed(2));
+    const price = parseFloat((base * (1 + change / 100)).toFixed(base < 1 ? 5 : 2));
+    const volume = parseFloat(((baseVolumes[sym] || 1e8) * (0.85 + Math.random() * 0.3)).toFixed(0));
+    return { symbol: sym, name: HEATMAP_DISPLAY[sym] || sym.replace('USDT',''), price, change_pct: change, volume_24h: volume };
+  });
+}
+
+app.get('/api/heatmap', async (req, res) => {
+  try {
+    const result = await binanceGet('/api/v3/ticker/24hr');
+    if (result.status !== 200) throw new Error('Binance unavailable');
+    const all = result.data;
+    const data = HEATMAP_SYMBOLS.map(sym => {
+      const t = all.find(x => x.symbol === sym);
+      if (!t) return null;
+      return {
+        symbol: sym,
+        name: HEATMAP_DISPLAY[sym] || sym.replace('USDT',''),
+        price: parseFloat(t.lastPrice),
+        change_pct: parseFloat(t.priceChangePercent),
+        volume_24h: parseFloat(t.quoteVolume),
+      };
+    }).filter(Boolean);
+    res.json({ data, updated_at: Date.now(), demo: false });
+  } catch {
+    res.json({ data: generateHeatmapDemo(), updated_at: Date.now(), demo: true });
+  }
+});
+
 const journalEntries = [];
 
 app.post('/api/journal/entry', (req, res) => {
