@@ -1,32 +1,80 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import Chart from './components/Chart';
 import OrderBook from './components/OrderBook';
 import SecuritiesTable from './components/SecuritiesTable';
 import TradesPanel from './components/TradesPanel';
 import OrderPanel from './components/OrderPanel';
+import JournalModal from './components/JournalModal';
+import JournalTab from './components/JournalTab';
 import { useMarketData } from './hooks/useMarketData';
-import { SYMBOLS, INTERVALS, Order } from './types';
+import { SYMBOLS, INTERVALS, Order, Emotion, MarketCondition } from './types';
 
 const App: React.FC = () => {
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
-  const [bottomTab, setBottomTab] = useState<'securities' | 'orders' | 'trades' | 'buysell'>('securities');
+  const [bottomTab, setBottomTab] = useState<'securities' | 'orders' | 'trades' | 'buysell' | 'journal'>('securities');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [journalOrder, setJournalOrder] = useState<Order | null>(null);
+  const [journalKey, setJournalKey] = useState(0);
 
   const { klines, orderBook, trades, ticker, isDemo } = useMarketData(symbol, interval);
+  const tickerRef = useRef<string | undefined>(undefined);
+  tickerRef.current = ticker?.lastPrice;
 
   const handlePlaceOrder = useCallback((order: Order) => {
     setOrders(prev => [order, ...prev]);
+    const delay = 1500 + Math.random() * 1000;
     setTimeout(() => {
-      setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: 'FILLED' as const } : o));
-    }, 1500 + Math.random() * 1000);
+      const currentPrice = tickerRef.current ? parseFloat(tickerRef.current) : order.price;
+      const slippage = currentPrice * (Math.random() * 0.002 - 0.001);
+      const fillPrice = parseFloat((currentPrice + slippage).toFixed(6));
+      const pnl = parseFloat(
+        ((fillPrice - order.price) * order.quantity * (order.side === 'BUY' ? 1 : -1)).toFixed(2)
+      );
+      const filledOrder: Order = { ...order, status: 'FILLED', fillPrice, pnl };
+      setOrders(prev => prev.map(o => o.id === order.id ? filledOrder : o));
+      setJournalOrder(filledOrder);
+      setJournalKey(k => k + 1);
+    }, delay);
   }, []);
 
   const handleCancelOrder = useCallback((id: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'CANCELLED' as const } : o));
   }, []);
 
+  const handleJournalSave = useCallback(async (entry: {
+    reason: string; emotion: Emotion; market_condition: MarketCondition; notes: string;
+  }) => {
+    if (!journalOrder) return;
+    try {
+      await fetch('/api/journal/entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trade_id: journalOrder.id,
+          reason: entry.reason,
+          emotion: entry.emotion,
+          market_condition: entry.market_condition,
+          notes: entry.notes,
+          trade: journalOrder,
+        }),
+      });
+    } catch {}
+    setJournalOrder(null);
+  }, [journalOrder]);
+
+  const handleJournalSkip = useCallback(() => {
+    setJournalOrder(null);
+  }, []);
+
   const change = ticker ? parseFloat(ticker.priceChangePercent) : 0;
+
+  const bottomTabs = ['securities', 'buysell', 'orders', 'trades', 'journal'] as const;
+  const tabLabel = (t: typeof bottomTabs[number]) => {
+    if (t === 'buysell') return 'Buy/Sell';
+    if (t === 'journal') return '📓 Journal';
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  };
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#1a1a2e', color: '#e0e0e0' }}>
@@ -79,20 +127,21 @@ const App: React.FC = () => {
           <div style={{ flex: 1, minHeight: 0 }}>
             <Chart klines={klines} symbol={symbol} />
           </div>
-          <div style={{ height: 220, borderTop: '1px solid #2a2a4e', background: '#1e1e35', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ height: 240, borderTop: '1px solid #2a2a4e', background: '#1e1e35', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', borderBottom: '1px solid #2a2a4e', flexShrink: 0 }}>
-              {(['securities', 'buysell', 'orders', 'trades'] as const).map(tab => (
+              {bottomTabs.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setBottomTab(tab)}
                   style={{
-                    padding: '6px 16px', border: 'none', cursor: 'pointer', fontSize: 12,
+                    padding: '6px 14px', border: 'none', cursor: 'pointer', fontSize: 12,
                     background: bottomTab === tab ? '#2a2a4e' : 'transparent',
                     color: bottomTab === tab ? '#e0e0e0' : '#666',
                     borderBottom: bottomTab === tab ? '2px solid #4fc3f7' : '2px solid transparent',
+                    whiteSpace: 'nowrap',
                   }}
                 >
-                  {tab === 'buysell' ? 'Buy/Sell' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tabLabel(tab)}
                 </button>
               ))}
             </div>
@@ -111,7 +160,9 @@ const App: React.FC = () => {
                         <th style={{ padding: '3px 8px', textAlign: 'left' }}>Symbol</th>
                         <th style={{ padding: '3px 8px', textAlign: 'left' }}>Side</th>
                         <th style={{ padding: '3px 8px', textAlign: 'right' }}>Price</th>
+                        <th style={{ padding: '3px 8px', textAlign: 'right' }}>Fill Price</th>
                         <th style={{ padding: '3px 8px', textAlign: 'right' }}>Qty</th>
+                        <th style={{ padding: '3px 8px', textAlign: 'right' }}>PnL</th>
                         <th style={{ padding: '3px 8px', textAlign: 'right' }}>Status</th>
                         <th style={{ padding: '3px 8px' }}></th>
                       </tr>
@@ -122,7 +173,13 @@ const App: React.FC = () => {
                           <td style={{ padding: '3px 8px' }}>{order.symbol}</td>
                           <td style={{ padding: '3px 8px', color: order.side === 'BUY' ? '#26a69a' : '#ef5350' }}>{order.side}</td>
                           <td style={{ padding: '3px 8px', textAlign: 'right' }}>{order.price.toLocaleString()}</td>
+                          <td style={{ padding: '3px 8px', textAlign: 'right', color: '#888' }}>
+                            {order.fillPrice ? order.fillPrice.toLocaleString() : '—'}
+                          </td>
                           <td style={{ padding: '3px 8px', textAlign: 'right' }}>{order.quantity}</td>
+                          <td style={{ padding: '3px 8px', textAlign: 'right', color: order.pnl !== undefined ? (order.pnl >= 0 ? '#26a69a' : '#ef5350') : '#666' }}>
+                            {order.pnl !== undefined ? `${order.pnl >= 0 ? '+' : ''}$${order.pnl.toFixed(2)}` : '—'}
+                          </td>
                           <td style={{ padding: '3px 8px', textAlign: 'right', color: order.status === 'FILLED' ? '#26a69a' : order.status === 'CANCELLED' ? '#888' : '#ff9800' }}>
                             {order.status}
                           </td>
@@ -136,7 +193,7 @@ const App: React.FC = () => {
                         </tr>
                       ))}
                       {orders.length === 0 && (
-                        <tr><td colSpan={6} style={{ textAlign: 'center', padding: 16, color: '#555' }}>No orders</td></tr>
+                        <tr><td colSpan={8} style={{ textAlign: 'center', padding: 16, color: '#555' }}>No orders</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -151,6 +208,9 @@ const App: React.FC = () => {
                   onCancelOrder={handleCancelOrder}
                 />
               )}
+              {bottomTab === 'journal' && (
+                <JournalTab key={journalKey} />
+              )}
             </div>
           </div>
         </div>
@@ -158,6 +218,15 @@ const App: React.FC = () => {
           <OrderBook orderBook={orderBook} lastPrice={ticker?.lastPrice} />
         </div>
       </div>
+
+      {journalOrder && (
+        <JournalModal
+          key={`modal-${journalOrder.id}`}
+          order={journalOrder}
+          onSave={handleJournalSave}
+          onSkip={handleJournalSkip}
+        />
+      )}
     </div>
   );
 };

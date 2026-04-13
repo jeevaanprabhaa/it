@@ -89,6 +89,63 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
 });
 
+const journalEntries = [];
+
+app.post('/api/journal/entry', (req, res) => {
+  const { trade_id, reason, emotion, market_condition, notes, trade } = req.body;
+  if (!trade_id || !emotion) {
+    return res.status(400).json({ error: 'trade_id and emotion are required' });
+  }
+  const entry = {
+    id: Date.now().toString(),
+    trade_id,
+    reason: reason || '',
+    emotion,
+    market_condition: market_condition || 'ranging',
+    notes: notes || '',
+    trade: trade || null,
+    created_at: Date.now(),
+  };
+  journalEntries.unshift(entry);
+  res.status(201).json(entry);
+});
+
+app.get('/api/journal', (req, res) => {
+  res.json(journalEntries);
+});
+
+app.get('/api/journal/analytics', (req, res) => {
+  const emotions = ['confident', 'fearful', 'fomo', 'neutral', 'greedy'];
+  const win_rate_by_emotion = {};
+  const avg_pnl_by_emotion = {};
+
+  emotions.forEach(em => {
+    const group = journalEntries.filter(e => e.emotion === em && e.trade && typeof e.trade.pnl === 'number');
+    if (!group.length) { win_rate_by_emotion[em] = null; avg_pnl_by_emotion[em] = null; return; }
+    const wins = group.filter(e => e.trade.pnl > 0).length;
+    win_rate_by_emotion[em] = parseFloat((wins / group.length).toFixed(2));
+    avg_pnl_by_emotion[em] = parseFloat((group.reduce((s, e) => s + e.trade.pnl, 0) / group.length).toFixed(2));
+  });
+
+  const wordMap = {};
+  journalEntries.forEach(e => {
+    if (!e.reason || !e.trade || typeof e.trade.pnl !== 'number') return;
+    const words = e.reason.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+    words.forEach(w => {
+      if (!wordMap[w]) wordMap[w] = { count: 0, totalPnl: 0 };
+      wordMap[w].count++;
+      wordMap[w].totalPnl += e.trade.pnl;
+    });
+  });
+  const most_profitable_reason_keywords = Object.entries(wordMap)
+    .filter(([, v]) => v.count >= 1)
+    .sort((a, b) => b[1].totalPnl - a[1].totalPnl)
+    .slice(0, 5)
+    .map(([word, v]) => ({ word, avg_pnl: parseFloat((v.totalPnl / v.count).toFixed(2)), count: v.count }));
+
+  res.json({ win_rate_by_emotion, avg_pnl_by_emotion, most_profitable_reason_keywords });
+});
+
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: '/ws' });
 
