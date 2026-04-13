@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Order } from '../types';
+import { Order, OrderType } from '../types';
 
 interface Props {
   symbol: string;
@@ -9,94 +9,248 @@ interface Props {
   onCancelOrder: (id: string) => void;
 }
 
+const ORDER_TYPES: { type: OrderType; label: string; desc: string }[] = [
+  { type: 'market', label: 'Market', desc: 'Fills immediately at current price' },
+  { type: 'limit', label: 'Limit', desc: 'Fills when price reaches target' },
+  { type: 'stop', label: 'Stop-Loss', desc: 'Sells when price falls below stop' },
+];
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '6px 8px',
+  background: '#12122a', border: '1px solid #3a3a5e', borderRadius: 4,
+  color: '#e0e0e0', fontSize: 12, outline: 'none',
+};
+
+const labelStyle: React.CSSProperties = {
+  color: '#888', display: 'block', marginBottom: 3, fontSize: 11, fontWeight: 600,
+  textTransform: 'uppercase', letterSpacing: '0.04em',
+};
+
 const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, onCancelOrder }) => {
   const [side, setSide] = useState<'BUY' | 'SELL'>('BUY');
+  const [orderType, setOrderType] = useState<OrderType>('market');
   const [price, setPrice] = useState('');
+  const [triggerPrice, setTriggerPrice] = useState('');
   const [qty, setQty] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const marketPrice = lastPrice ? parseFloat(lastPrice) : 0;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const p = parseFloat(price) || (lastPrice ? parseFloat(lastPrice) : 0);
     const q = parseFloat(qty);
     if (!q || q <= 0) return;
+
+    const p = parseFloat(price) || marketPrice;
+    const tp = parseFloat(triggerPrice) || p;
+
     const order: Order = {
       id: Date.now().toString(),
       symbol,
-      side,
+      side: orderType === 'stop' ? 'SELL' : side,
+      orderType,
       price: p,
+      triggerPrice: orderType !== 'market' ? tp : undefined,
       quantity: q,
-      status: 'OPEN',
+      status: orderType === 'market' ? 'OPEN' : 'PENDING',
       time: Date.now(),
     };
+
+    if (orderType !== 'market') {
+      try {
+        await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(order),
+        });
+      } catch {}
+    }
+
     onPlaceOrder(order);
     setPrice('');
+    setTriggerPrice('');
     setQty('');
   };
 
+  const pendingOrders = orders.filter(o => o.status === 'PENDING' || o.status === 'OPEN');
+  const sideColor = side === 'BUY' ? '#26a69a' : '#ef5350';
+  const effectiveSide = orderType === 'stop' ? 'SELL' : side;
+
   return (
-    <div style={{ padding: 12, fontSize: 13 }}>
-      <div style={{ display: 'flex', marginBottom: 12, borderRadius: 4, overflow: 'hidden', border: '1px solid #3a3a5e' }}>
-        <button
-          onClick={() => setSide('BUY')}
-          style={{ flex: 1, padding: '6px 0', background: side === 'BUY' ? '#26a69a' : 'transparent', color: side === 'BUY' ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontWeight: 600 }}
-        >
-          BUY
-        </button>
-        <button
-          onClick={() => setSide('SELL')}
-          style={{ flex: 1, padding: '6px 0', background: side === 'SELL' ? '#ef5350' : 'transparent', color: side === 'SELL' ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontWeight: 600 }}
-        >
-          SELL
-        </button>
+    <div style={{ padding: '10px 12px', fontSize: 13, overflowY: 'auto', height: '100%' }}>
+      <div style={{ display: 'flex', gap: 3, marginBottom: 10 }}>
+        {ORDER_TYPES.map(ot => (
+          <button
+            key={ot.type}
+            onClick={() => setOrderType(ot.type)}
+            title={ot.desc}
+            style={{
+              flex: 1, padding: '4px 0', fontSize: 11, fontWeight: 600,
+              border: `1px solid ${orderType === ot.type ? '#4fc3f7' : '#3a3a5e'}`,
+              borderRadius: 4, cursor: 'pointer',
+              background: orderType === ot.type ? '#4fc3f718' : 'transparent',
+              color: orderType === ot.type ? '#4fc3f7' : '#666',
+            }}
+          >
+            {ot.label}
+          </button>
+        ))}
       </div>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 8 }}>
-          <label style={{ color: '#888', display: 'block', marginBottom: 2 }}>Price</label>
-          <input
-            type="number"
-            value={price}
-            onChange={e => setPrice(e.target.value)}
-            placeholder={lastPrice || 'Market'}
-            style={{ width: '100%', padding: '6px 8px', background: '#1a1a2e', border: '1px solid #3a3a5e', borderRadius: 4, color: '#e0e0e0', fontSize: 13 }}
-          />
+
+      {orderType !== 'stop' && (
+        <div style={{ display: 'flex', marginBottom: 10, borderRadius: 4, overflow: 'hidden', border: '1px solid #3a3a5e' }}>
+          <button
+            onClick={() => setSide('BUY')}
+            style={{ flex: 1, padding: '5px 0', background: side === 'BUY' ? '#26a69a' : 'transparent', color: side === 'BUY' ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
+          >
+            BUY
+          </button>
+          <button
+            onClick={() => setSide('SELL')}
+            style={{ flex: 1, padding: '5px 0', background: side === 'SELL' ? '#ef5350' : 'transparent', color: side === 'SELL' ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
+          >
+            SELL
+          </button>
         </div>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ color: '#888', display: 'block', marginBottom: 2 }}>Quantity</label>
+      )}
+
+      {orderType === 'stop' && (
+        <div style={{ padding: '4px 8px', marginBottom: 8, background: '#3a1a1a', border: '1px solid #ef535044', borderRadius: 4, fontSize: 11, color: '#ef9a9a' }}>
+          Stop-Loss automatically sells when price falls to the stop level.
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        {orderType === 'market' && (
+          <div style={{ marginBottom: 8 }}>
+            <label style={labelStyle}>Price (Market)</label>
+            <div style={{ ...inputStyle, color: '#666', cursor: 'default', display: 'flex', alignItems: 'center' }}>
+              {marketPrice ? marketPrice.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'} <span style={{ marginLeft: 4, fontSize: 10, color: '#444' }}>auto</span>
+            </div>
+          </div>
+        )}
+
+        {orderType === 'limit' && (
+          <>
+            <div style={{ marginBottom: 8 }}>
+              <label style={labelStyle}>Entry Price (at order time)</label>
+              <input
+                type="number" step="any" value={price}
+                onChange={e => setPrice(e.target.value)}
+                placeholder={lastPrice || '0'}
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <label style={labelStyle}>Trigger Price (execute when reached)</label>
+              <input
+                type="number" step="any" value={triggerPrice}
+                onChange={e => setTriggerPrice(e.target.value)}
+                placeholder={side === 'BUY' ? 'Below current price' : 'Above current price'}
+                style={{ ...inputStyle, borderColor: '#4fc3f766' }}
+              />
+            </div>
+          </>
+        )}
+
+        {orderType === 'stop' && (
+          <>
+            <div style={{ marginBottom: 8 }}>
+              <label style={labelStyle}>Current Entry Price</label>
+              <input
+                type="number" step="any" value={price}
+                onChange={e => setPrice(e.target.value)}
+                placeholder={lastPrice || '0'}
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <label style={labelStyle}>Stop Price (sell when price falls to)</label>
+              <input
+                type="number" step="any" value={triggerPrice}
+                onChange={e => setTriggerPrice(e.target.value)}
+                placeholder="Below current price"
+                style={{ ...inputStyle, borderColor: '#ef535066' }}
+              />
+            </div>
+          </>
+        )}
+
+        <div style={{ marginBottom: 10 }}>
+          <label style={labelStyle}>Quantity</label>
           <input
-            type="number"
-            value={qty}
+            type="number" step="any" value={qty}
             onChange={e => setQty(e.target.value)}
             placeholder="0.00"
-            style={{ width: '100%', padding: '6px 8px', background: '#1a1a2e', border: '1px solid #3a3a5e', borderRadius: 4, color: '#e0e0e0', fontSize: 13 }}
+            style={inputStyle}
           />
         </div>
+
+        {orderType !== 'market' && triggerPrice && qty && (
+          <div style={{ marginBottom: 8, padding: '5px 8px', background: '#1a2a1a', border: '1px solid #2a4a2a', borderRadius: 4, fontSize: 11, color: '#888' }}>
+            <span style={{ color: '#66bb6a' }}>
+              {orderType === 'limit'
+                ? `Will ${side} ${qty} ${symbol.replace('USDT','')} when price ${side === 'BUY' ? '≤' : '≥'} ${parseFloat(triggerPrice).toLocaleString()}`
+                : `Will SELL ${qty} ${symbol.replace('USDT','')} when price ≤ ${parseFloat(triggerPrice).toLocaleString()}`
+              }
+            </span>
+            <br />
+            <span style={{ color: '#555' }}>Checked every 30s by the server</span>
+          </div>
+        )}
+
         <button
           type="submit"
           style={{
             width: '100%', padding: '8px 0',
-            background: side === 'BUY' ? '#26a69a' : '#ef5350',
-            color: '#fff', border: 'none', borderRadius: 4, fontWeight: 600, cursor: 'pointer', fontSize: 14,
+            background: orderType === 'stop' ? '#ef5350' : (effectiveSide === 'BUY' ? '#26a69a' : '#ef5350'),
+            color: '#fff', border: 'none', borderRadius: 4, fontWeight: 700, cursor: 'pointer', fontSize: 13,
           }}
         >
-          {side} {symbol.replace('USDT', '')}
+          {orderType === 'market' && `${effectiveSide} ${symbol.replace('USDT', '')} (Market)`}
+          {orderType === 'limit' && `Place Limit ${effectiveSide}`}
+          {orderType === 'stop' && `Set Stop-Loss`}
         </button>
       </form>
-      {orders.length > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ color: '#888', marginBottom: 6, fontSize: 12 }}>Open Orders</div>
-          {orders.filter(o => o.status === 'OPEN').map(order => (
-            <div key={order.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #2a2a3e', fontSize: 12 }}>
-              <span style={{ color: order.side === 'BUY' ? '#26a69a' : '#ef5350' }}>{order.side}</span>
-              <span>{order.price.toLocaleString()}</span>
-              <span>{order.quantity}</span>
-              <button
-                onClick={() => onCancelOrder(order.id)}
-                style={{ padding: '2px 6px', background: 'transparent', border: '1px solid #666', borderRadius: 3, color: '#999', cursor: 'pointer', fontSize: 11 }}
-              >
-                Cancel
-              </button>
-            </div>
-          ))}
+
+      {pendingOrders.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ color: '#9090b0', marginBottom: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Open Orders ({pendingOrders.length})
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {pendingOrders.map(order => (
+              <div key={order.id} style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto',
+                alignItems: 'center', padding: '5px 8px',
+                background: '#16213e', borderRadius: 4,
+                border: `1px solid ${order.status === 'PENDING' ? '#4fc3f733' : '#2a2a4e'}`,
+                fontSize: 11, gap: 4,
+              }}>
+                <div>
+                  <span style={{ color: order.side === 'BUY' ? '#26a69a' : '#ef5350', fontWeight: 700 }}>{order.side}</span>
+                  {' '}
+                  <span style={{ color: '#555' }}>{order.orderType}</span>
+                </div>
+                <div style={{ color: '#c0c0c0' }}>
+                  {order.triggerPrice
+                    ? `@ ${order.triggerPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}`
+                    : `@ ${order.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}`
+                  }
+                </div>
+                <div>
+                  <span style={{ color: order.status === 'PENDING' ? '#ff9800' : '#26a69a', fontWeight: 600 }}>
+                    {order.status}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onCancelOrder(order.id)}
+                  style={{ padding: '2px 6px', background: 'transparent', border: '1px solid #444', borderRadius: 3, color: '#777', cursor: 'pointer', fontSize: 10 }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

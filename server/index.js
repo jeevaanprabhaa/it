@@ -28,6 +28,26 @@ function binanceGet(path) {
   });
 }
 
+const demoPriceCache = {
+  BTCUSDT: 43500, ETHUSDT: 2280, BNBUSDT: 310, SOLUSDT: 98, XRPUSDT: 0.62,
+  DOGEUSDT: 0.085, ADAUSDT: 0.48, AVAXUSDT: 35, DOTUSDT: 7.2, MATICUSDT: 0.9,
+};
+
+async function getCurrentPrice(symbol) {
+  try {
+    const result = await binanceGet(`/api/v3/ticker/price?symbol=${symbol}`);
+    if (result.status === 200) {
+      const p = parseFloat(result.data.price);
+      demoPriceCache[symbol] = p;
+      return p;
+    }
+  } catch {}
+  const base = demoPriceCache[symbol] || 100;
+  const moved = base * (1 + (Math.random() - 0.498) * 0.003);
+  demoPriceCache[symbol] = moved;
+  return moved;
+}
+
 app.get('/api/klines', async (req, res) => {
   const { symbol = 'BTCUSDT', interval = '1m', limit = 500 } = req.query;
   try {
@@ -37,6 +57,53 @@ app.get('/api/klines', async (req, res) => {
     } else {
       res.status(result.status).json({ error: 'Binance API error', details: result.data });
     }
+  } catch (e) {
+    res.status(503).json({ error: 'Service unavailable', message: e.message });
+  }
+});
+
+function computeVWAP(rawKlines) {
+  const result = [];
+  let cumTPV = 0;
+  let cumVol = 0;
+  let currentDay = null;
+  for (const k of rawKlines) {
+    const openTime = k[0];
+    const date = new Date(openTime);
+    const day = `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
+    if (day !== currentDay) { cumTPV = 0; cumVol = 0; currentDay = day; }
+    const high = parseFloat(k[2]);
+    const low = parseFloat(k[3]);
+    const close = parseFloat(k[4]);
+    const volume = parseFloat(k[5]);
+    const tp = (high + low + close) / 3;
+    cumTPV += tp * volume;
+    cumVol += volume;
+    result.push(cumVol > 0 ? parseFloat((cumTPV / cumVol).toFixed(8)) : null);
+  }
+  return result;
+}
+
+app.get('/api/history/:symbol', async (req, res) => {
+  const { symbol } = req.params;
+  const { interval = '1m', limit = 500 } = req.query;
+  try {
+    const result = await binanceGet(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+    if (result.status !== 200) {
+      return res.status(result.status).json({ error: 'Binance API error' });
+    }
+    const raw = result.data;
+    const vwap = computeVWAP(raw);
+    const klines = raw.map((k, i) => ({
+      time: Math.floor(k[0] / 1000),
+      open: parseFloat(k[1]),
+      high: parseFloat(k[2]),
+      low: parseFloat(k[3]),
+      close: parseFloat(k[4]),
+      volume: parseFloat(k[5]),
+      vwap: vwap[i],
+    }));
+    res.json(klines);
   } catch (e) {
     res.status(503).json({ error: 'Service unavailable', message: e.message });
   }
@@ -203,12 +270,55 @@ app.get('/api/journal/analytics', (req, res) => {
   res.json({ win_rate_by_emotion, avg_pnl_by_emotion, most_profitable_reason_keywords });
 });
 
+const advancedOrders = [];
+
+app.post('/api/orders', (req, res) => {
+  const { id, symbol, side, orderType, price, triggerPrice, quantity, time } = req.body;
+  if (!id || !symbol || !side || !orderType || !quantity) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const order = {
+    id, symbol, side, orderType,
+    price: price || 0,
+    triggerPrice: triggerPrice || price || 0,
+    quantity,
+    status: 'PENDING',
+    time: time || Date.now(),
+    fillPrice: null,
+    pnl: null,
+    filledAt: null,
+  };
+  advancedOrders.push(order);
+  res.status(201).json(order);
+});
+
+app.get('/api/orders', (req, res) => {
+  res.json(advancedOrders);
+});
+
+app.delete('/api/orders/:id', (req, res) => {
+  const order = advancedOrders.find(o => o.id === req.params.id);
+  if (!order) return res.status(404).json({ error: 'Not found' });
+  if (order.status === 'PENDING') order.status = 'CANCELLED';
+  res.json(order);
+});
+
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: '/ws' });
 
-const clientStreams = new Map();
+const frontendClients = new Set();
+
+function broadcastToFrontend(msg) {
+  const data = JSON.stringify(msg);
+  frontendClients.forEach(ws => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(data);
+    }
+  });
+}
 
 wss.on('connection', (ws) => {
+  frontendClients.add(ws);
   let binanceWs = null;
 
   ws.on('message', (msg) => {
@@ -217,44 +327,71 @@ wss.on('connection', (ws) => {
       if (data.type === 'subscribe') {
         const { symbol = 'btcusdt', stream = 'kline_1m' } = data;
         const streamName = `${symbol.toLowerCase()}@${stream}`;
-
-        if (binanceWs) {
-          binanceWs.terminate();
-        }
-
+        if (binanceWs) binanceWs.terminate();
         try {
           binanceWs = new WebSocket(`wss://stream.binance.com:9443/ws/${streamName}`);
-
           binanceWs.on('message', (binanceMsg) => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send(binanceMsg.toString());
-            }
+            if (ws.readyState === WebSocket.OPEN) ws.send(binanceMsg.toString());
           });
-
           binanceWs.on('error', () => {
             if (ws.readyState === WebSocket.OPEN) {
               ws.send(JSON.stringify({ type: 'error', message: 'Binance stream unavailable' }));
             }
           });
-
-          binanceWs.on('close', () => {
-          });
+          binanceWs.on('close', () => {});
         } catch (e) {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'error', message: 'Cannot connect to Binance stream' }));
           }
         }
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   });
 
   ws.on('close', () => {
-    if (binanceWs) {
-      binanceWs.terminate();
-    }
+    frontendClients.delete(ws);
+    if (binanceWs) binanceWs.terminate();
   });
 });
+
+setInterval(async () => {
+  const pending = advancedOrders.filter(o => o.status === 'PENDING');
+  if (!pending.length) return;
+
+  const symbols = [...new Set(pending.map(o => o.symbol))];
+  const prices = {};
+  for (const sym of symbols) {
+    prices[sym] = await getCurrentPrice(sym);
+  }
+
+  for (const order of pending) {
+    const currentPrice = prices[order.symbol];
+    if (!currentPrice) continue;
+
+    let triggered = false;
+    if (order.orderType === 'limit') {
+      if (order.side === 'BUY' && currentPrice <= order.triggerPrice) triggered = true;
+      if (order.side === 'SELL' && currentPrice >= order.triggerPrice) triggered = true;
+    } else if (order.orderType === 'stop') {
+      if (currentPrice <= order.triggerPrice) triggered = true;
+    }
+
+    if (triggered) {
+      const slippage = currentPrice * (Math.random() * 0.001 - 0.0005);
+      const fillPrice = parseFloat((currentPrice + slippage).toFixed(8));
+      const pnl = parseFloat(
+        ((fillPrice - order.price) * order.quantity * (order.side === 'BUY' ? 1 : -1)).toFixed(2)
+      );
+      order.status = 'FILLED';
+      order.fillPrice = fillPrice;
+      order.pnl = pnl;
+      order.filledAt = Date.now();
+
+      broadcastToFrontend({ type: 'order_filled', order });
+      console.log(`Order ${order.id} filled at ${fillPrice} (PnL: ${pnl})`);
+    }
+  }
+}, 30000);
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`StockSharp backend running on port ${PORT}`);

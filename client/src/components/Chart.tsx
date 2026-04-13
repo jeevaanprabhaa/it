@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData } from 'lightweight-charts';
 import { Kline } from '../types';
 
@@ -31,6 +31,23 @@ function calcBollingerBands(data: number[], period = 20, multiplier = 2) {
   return { upper, lower, sma };
 }
 
+function calcVWAP(klines: Kline[]): (number | null)[] {
+  const result: (number | null)[] = [];
+  let cumTPV = 0;
+  let cumVol = 0;
+  let currentDay: string | null = null;
+  for (const k of klines) {
+    const date = new Date(k.time * 1000);
+    const day = `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
+    if (day !== currentDay) { cumTPV = 0; cumVol = 0; currentDay = day; }
+    const tp = (k.high + k.low + k.close) / 3;
+    cumTPV += tp * k.volume;
+    cumVol += k.volume;
+    result.push(cumVol > 0 ? cumTPV / cumVol : null);
+  }
+  return result;
+}
+
 const Chart: React.FC<Props> = ({ klines, symbol }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -38,6 +55,11 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
   const smaRef = useRef<ISeriesApi<'Line'> | null>(null);
   const upperRef = useRef<ISeriesApi<'Line'> | null>(null);
   const lowerRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const vwapRef = useRef<ISeriesApi<'Line'> | null>(null);
+
+  const [showSma, setShowSma] = useState(true);
+  const [showBB, setShowBB] = useState(true);
+  const [showVwap, setShowVwap] = useState(true);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -59,6 +81,7 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
     smaRef.current = chart.addLineSeries({ color: '#2196F3', lineWidth: 1, title: 'SMA20' });
     upperRef.current = chart.addLineSeries({ color: '#FF9800', lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
     lowerRef.current = chart.addLineSeries({ color: '#FF9800', lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
+    vwapRef.current = chart.addLineSeries({ color: '#ce93d8', lineWidth: 2, title: 'VWAP' });
 
     const observer = new ResizeObserver(() => {
       if (containerRef.current && chartRef.current) {
@@ -74,6 +97,19 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
   }, []);
 
   useEffect(() => {
+    smaRef.current?.applyOptions({ visible: showSma });
+  }, [showSma]);
+
+  useEffect(() => {
+    upperRef.current?.applyOptions({ visible: showBB });
+    lowerRef.current?.applyOptions({ visible: showBB });
+  }, [showBB]);
+
+  useEffect(() => {
+    vwapRef.current?.applyOptions({ visible: showVwap });
+  }, [showVwap]);
+
+  useEffect(() => {
     if (!klines.length || !candleRef.current) return;
     const candleData: CandlestickData[] = klines.map(k => ({
       time: k.time as CandlestickData['time'],
@@ -83,6 +119,7 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
 
     const closes = klines.map(k => k.close);
     const { sma, upper, lower } = calcBollingerBands(closes, 20, 2);
+    const vwap = calcVWAP(klines);
 
     const smaData: LineData[] = klines
       .map((k, i) => ({ time: k.time as LineData['time'], value: sma[i] }))
@@ -93,14 +130,54 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
     const lowerData: LineData[] = klines
       .map((k, i) => ({ time: k.time as LineData['time'], value: lower[i] }))
       .filter(d => d.value !== null) as LineData[];
+    const vwapData: LineData[] = klines
+      .map((k, i) => ({ time: k.time as LineData['time'], value: vwap[i] }))
+      .filter(d => d.value !== null) as LineData[];
 
     smaRef.current?.setData(smaData);
     upperRef.current?.setData(upperData);
     lowerRef.current?.setData(lowerData);
+    vwapRef.current?.setData(vwapData);
     chartRef.current?.timeScale().fitContent();
   }, [klines]);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+  const checkboxStyle = (color: string, checked: boolean): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
+    padding: '2px 8px', borderRadius: 4,
+    background: checked ? `${color}18` : 'transparent',
+    border: `1px solid ${checked ? color : '#3a3a5e'}`,
+    color: checked ? color : '#666',
+    fontSize: 11, fontWeight: 600, userSelect: 'none',
+    transition: 'all 0.15s',
+  });
+
+  const currentVwap = klines.length > 0
+    ? (() => {
+        const vwap = calcVWAP(klines);
+        const last = vwap[vwap.length - 1];
+        return last ? last.toLocaleString(undefined, { maximumFractionDigits: 4 }) : null;
+      })()
+    : null;
+
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      <div style={{
+        position: 'absolute', top: 8, left: 8, zIndex: 10,
+        display: 'flex', gap: 6, alignItems: 'center',
+      }}>
+        <div style={checkboxStyle('#2196F3', showSma)} onClick={() => setShowSma(v => !v)}>
+          <span>SMA20</span>
+        </div>
+        <div style={checkboxStyle('#FF9800', showBB)} onClick={() => setShowBB(v => !v)}>
+          <span>BB</span>
+        </div>
+        <div style={checkboxStyle('#ce93d8', showVwap)} onClick={() => setShowVwap(v => !v)}>
+          <span>VWAP{showVwap && currentVwap ? ` ${currentVwap}` : ''}</span>
+        </div>
+      </div>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+    </div>
+  );
 };
 
 export default Chart;

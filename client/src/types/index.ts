@@ -35,13 +35,17 @@ export interface Ticker {
   lowPrice: string;
 }
 
+export type OrderType = 'market' | 'limit' | 'stop';
+
 export interface Order {
   id: string;
   symbol: string;
   side: 'BUY' | 'SELL';
+  orderType: OrderType;
   price: number;
+  triggerPrice?: number;
   quantity: number;
-  status: 'OPEN' | 'FILLED' | 'CANCELLED';
+  status: 'OPEN' | 'PENDING' | 'FILLED' | 'CANCELLED';
   time: number;
   fillPrice?: number;
   pnl?: number;
