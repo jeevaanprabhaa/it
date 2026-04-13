@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlgoTrader — Offline</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d0d0d; color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      height: 100vh; text-align: center;
+    }
+    .icon { font-size: 72px; margin-bottom: 24px; }
+    h1 { font-size: 2rem; color: #00ff88; margin-bottom: 12px; letter-spacing: -0.02em; }
+    p { color: #888; font-size: 1rem; line-height: 1.6; margin-bottom: 32px; max-width: 300px; }
+    button {
+      background: #00ff88; color: #0d0d0d; border: none;
+      padding: 14px 32px; border-radius: 10px; font-size: 1rem;
+      font-weight: 700; cursor: pointer; letter-spacing: 0.01em;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.85; }
+    .status { margin-top: 24px; font-size: 12px; color: #444; }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="icon">📡</div>
+    <h1>Offline</h1>
+    <p>Reconnect to trade live markets.<br/>Your cached data is available below.</p>
+    <button onclick="window.location.reload()">Try Again</button>
+    <div class="status" id="status">Checking connection...</div>
+  </div>
+  <script>
+    document.getElementById('status').textContent =
+      navigator.onLine ? 'Network available — tap Try Again' : 'No network connection detected';
+    window.addEventListener('online', () => window.location.reload());
+  </script>
+</body>
+</html>
