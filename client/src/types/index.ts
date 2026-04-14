@@ -71,7 +71,62 @@ export interface Analytics {
   most_profitable_reason_keywords: { word: string; avg_pnl: number; count: number }[];
 }
 
-export const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'MATICUSDT'];
+export interface Wallet {
+  sessionId: string;
+  balance: number;
+  deposited: number;
+  pnlTotal: number;
+  tradesCount: number;
+  winsCount: number;
+  username: string;
+  createdAt: number;
+}
+
+export interface CoachInsight {
+  type: 'success' | 'warning' | 'danger';
+  text: string;
+}
+
+export interface Badge {
+  id: string;
+  label: string;
+  desc: string;
+}
+
+export interface RiskDna {
+  aggressiveness: number;
+  discipline: number;
+  emotionalControl: number;
+  consistency: number;
+  riskReward: number;
+}
+
+export interface CoachAnalysis {
+  score: number;
+  insights: CoachInsight[];
+  riskDna: RiskDna | null;
+  badges: Badge[];
+  stats?: {
+    winRate: number;
+    avgWin: number;
+    avgLoss: number;
+    rr: number;
+    totalPnl: number;
+    wins: number;
+    losses: number;
+    trades: number;
+  };
+}
+
+export interface LeaderboardEntry {
+  username: string;
+  pnlTotal: number;
+  tradesCount: number;
+  winRate: number;
+  balance: number;
+}
+
+export const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT', 'MATICUSDT', 'AVAXUSDT', 'DOTUSDT', 'LINKUSDT', 'LTCUSDT'];
 export const INTERVALS = ['1m', '3m', '5m', '15m', '30m', '1h', '4h', '1d', '1w'];
 export const EMOTIONS: Emotion[] = ['confident', 'fearful', 'fomo', 'neutral', 'greedy'];
 export const MARKET_CONDITIONS: MarketCondition[] = ['trending', 'ranging', 'volatile'];
