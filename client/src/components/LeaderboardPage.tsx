@@ -31,48 +31,48 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
   const medals = ['🥇', '🥈', '🥉'];
 
   return (
-    <div style={{ height: '100%', overflow: 'auto', background: '#080c14', color: '#e0e0e0' }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e2433', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onBack} style={{ background: 'transparent', border: '1px solid #1e2433', borderRadius: 6, color: '#888', padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>← Back</button>
+    <div style={{ height: '100%', overflow: 'auto', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onBack} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>← Back</button>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>🏆 Leaderboard</div>
-          <div style={{ fontSize: 12, color: '#555' }}>Top paper traders ranked by total P&L</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>🏆 Leaderboard</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Top paper traders ranked by total P&L</div>
         </div>
       </div>
 
       {loading ? (
-        <div style={{ padding: 40, textAlign: 'center', color: '#555' }}>Loading rankings…</div>
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading rankings…</div>
       ) : entries.length === 0 ? (
         <div style={{ padding: 40, textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>🏁</div>
-          <div style={{ fontSize: 16, color: '#fff', fontWeight: 700, marginBottom: 8 }}>Be the First!</div>
-          <div style={{ color: '#555', fontSize: 13 }}>No traders on the board yet. Place some trades to claim the top spot.</div>
+          <div style={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 700, marginBottom: 8 }}>Be the First!</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>No traders on the board yet. Place some trades to claim the top spot.</div>
         </div>
       ) : (
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {entries.map((entry, i) => {
               const isMe = entry.username === myUsername;
-              const pnlColor = entry.pnlTotal >= 0 ? '#00ff88' : '#ef5350';
+              const pnlColor = entry.pnlTotal >= 0 ? 'var(--accent)' : 'var(--danger)';
               return (
                 <div
                   key={i}
                   style={{
-                    background: isMe ? '#0a1e14' : '#0d1117',
-                    border: `1px solid ${isMe ? '#00ff8840' : '#1e2433'}`,
+                    background: isMe ? 'rgba(46,204,152,0.05)' : 'var(--bg-secondary)',
+                    border: `1px solid ${isMe ? 'rgba(46,204,152,0.25)' : 'var(--border)'}`,
                     borderRadius: 12, padding: '14px 18px',
                     display: 'flex', alignItems: 'center', gap: 14,
                   }}
                 >
-                  <div style={{ fontSize: i < 3 ? 24 : 14, width: 32, textAlign: 'center', color: i >= 3 ? '#444' : undefined, fontWeight: 700 }}>
+                  <div style={{ fontSize: i < 3 ? 24 : 14, width: 32, textAlign: 'center', color: i >= 3 ? 'var(--text-muted)' : undefined, fontWeight: 700 }}>
                     {i < 3 ? medals[i] : `#${i + 1}`}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: isMe ? '#00ff88' : '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: isMe ? 'var(--accent)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {entry.username}
-                      {isMe && <span style={{ fontSize: 10, background: '#00ff8820', border: '1px solid #00ff8840', borderRadius: 8, padding: '1px 6px', color: '#00ff88' }}>You</span>}
+                      {isMe && <span style={{ fontSize: 10, background: 'rgba(46,204,152,0.1)', border: '1px solid rgba(46,204,152,0.25)', borderRadius: 8, padding: '1px 6px', color: 'var(--accent)' }}>You</span>}
                     </div>
-                    <div style={{ fontSize: 11, color: '#555', marginTop: 2 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                       {entry.tradesCount} trades · {entry.winRate}% win rate
                     </div>
                   </div>
@@ -80,7 +80,7 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
                     <div style={{ fontSize: 16, fontWeight: 800, color: pnlColor }}>
                       {entry.pnlTotal >= 0 ? '+' : ''}${entry.pnlTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </div>
-                    <div style={{ fontSize: 11, color: '#444' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                       Balance: ${entry.balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
                   </div>
@@ -88,7 +88,7 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
               );
             })}
           </div>
-          <div style={{ marginTop: 20, padding: '12px 16px', background: '#0d1117', border: '1px solid #1e2433', borderRadius: 10, fontSize: 12, color: '#444', textAlign: 'center' }}>
+          <div style={{ marginTop: 20, padding: '12px 16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
             Leaderboard updates every 30 seconds · Paper trading only
           </div>
         </div>

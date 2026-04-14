@@ -17,12 +17,12 @@ const ORDER_TYPES: { type: OrderType; label: string; desc: string }[] = [
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '6px 8px',
-  background: '#12122a', border: '1px solid #3a3a5e', borderRadius: 4,
-  color: '#e0e0e0', fontSize: 12, outline: 'none',
+  background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 4,
+  color: 'var(--text-primary)', fontSize: 12, outline: 'none',
 };
 
 const labelStyle: React.CSSProperties = {
-  color: '#888', display: 'block', marginBottom: 3, fontSize: 11, fontWeight: 600,
+  color: 'var(--text-muted)', display: 'block', marginBottom: 3, fontSize: 11, fontWeight: 600,
   textTransform: 'uppercase', letterSpacing: '0.04em',
 };
 
@@ -72,7 +72,6 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
   };
 
   const pendingOrders = orders.filter(o => o.status === 'PENDING' || o.status === 'OPEN');
-  const sideColor = side === 'BUY' ? '#26a69a' : '#ef5350';
   const effectiveSide = orderType === 'stop' ? 'SELL' : side;
 
   return (
@@ -85,10 +84,10 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
             title={ot.desc}
             style={{
               flex: 1, padding: '4px 0', fontSize: 11, fontWeight: 600,
-              border: `1px solid ${orderType === ot.type ? '#4fc3f7' : '#3a3a5e'}`,
+              border: `1px solid ${orderType === ot.type ? 'var(--accent)' : 'var(--border)'}`,
               borderRadius: 4, cursor: 'pointer',
-              background: orderType === ot.type ? '#4fc3f718' : 'transparent',
-              color: orderType === ot.type ? '#4fc3f7' : '#666',
+              background: orderType === ot.type ? 'rgba(46,204,152,0.1)' : 'transparent',
+              color: orderType === ot.type ? 'var(--accent)' : 'var(--text-muted)',
             }}
           >
             {ot.label}
@@ -97,16 +96,16 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
       </div>
 
       {orderType !== 'stop' && (
-        <div style={{ display: 'flex', marginBottom: 10, borderRadius: 4, overflow: 'hidden', border: '1px solid #3a3a5e' }}>
+        <div style={{ display: 'flex', marginBottom: 10, borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border)' }}>
           <button
             onClick={() => setSide('BUY')}
-            style={{ flex: 1, padding: '5px 0', background: side === 'BUY' ? '#26a69a' : 'transparent', color: side === 'BUY' ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
+            style={{ flex: 1, padding: '5px 0', background: side === 'BUY' ? 'var(--accent)' : 'transparent', color: side === 'BUY' ? '#000' : 'var(--text-muted)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
           >
             BUY
           </button>
           <button
             onClick={() => setSide('SELL')}
-            style={{ flex: 1, padding: '5px 0', background: side === 'SELL' ? '#ef5350' : 'transparent', color: side === 'SELL' ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
+            style={{ flex: 1, padding: '5px 0', background: side === 'SELL' ? 'var(--danger)' : 'transparent', color: side === 'SELL' ? 'var(--text-primary)' : 'var(--text-muted)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
           >
             SELL
           </button>
@@ -114,7 +113,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
       )}
 
       {orderType === 'stop' && (
-        <div style={{ padding: '4px 8px', marginBottom: 8, background: '#3a1a1a', border: '1px solid #ef535044', borderRadius: 4, fontSize: 11, color: '#ef9a9a' }}>
+        <div style={{ padding: '4px 8px', marginBottom: 8, background: 'rgba(229,83,75,0.08)', border: '1px solid rgba(229,83,75,0.25)', borderRadius: 4, fontSize: 11, color: 'var(--danger)' }}>
           Stop-Loss automatically sells when price falls to the stop level.
         </div>
       )}
@@ -123,8 +122,8 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
         {orderType === 'market' && (
           <div style={{ marginBottom: 8 }}>
             <label style={labelStyle}>Price (Market)</label>
-            <div style={{ ...inputStyle, color: '#666', cursor: 'default', display: 'flex', alignItems: 'center' }}>
-              {marketPrice ? marketPrice.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'} <span style={{ marginLeft: 4, fontSize: 10, color: '#444' }}>auto</span>
+            <div style={{ ...inputStyle, color: 'var(--text-muted)', cursor: 'default', display: 'flex', alignItems: 'center' }}>
+              {marketPrice ? marketPrice.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'} <span style={{ marginLeft: 4, fontSize: 10, color: 'var(--text-muted)' }}>auto</span>
             </div>
           </div>
         )}
@@ -146,7 +145,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
                 type="number" step="any" value={triggerPrice}
                 onChange={e => setTriggerPrice(e.target.value)}
                 placeholder={side === 'BUY' ? 'Below current price' : 'Above current price'}
-                style={{ ...inputStyle, borderColor: '#4fc3f766' }}
+                style={{ ...inputStyle, borderColor: 'rgba(46,204,152,0.4)' }}
               />
             </div>
           </>
@@ -169,7 +168,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
                 type="number" step="any" value={triggerPrice}
                 onChange={e => setTriggerPrice(e.target.value)}
                 placeholder="Below current price"
-                style={{ ...inputStyle, borderColor: '#ef535066' }}
+                style={{ ...inputStyle, borderColor: 'rgba(229,83,75,0.4)' }}
               />
             </div>
           </>
@@ -186,15 +185,15 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
         </div>
 
         {orderType !== 'market' && triggerPrice && qty && (
-          <div style={{ marginBottom: 8, padding: '5px 8px', background: '#1a2a1a', border: '1px solid #2a4a2a', borderRadius: 4, fontSize: 11, color: '#888' }}>
-            <span style={{ color: '#66bb6a' }}>
+          <div style={{ marginBottom: 8, padding: '5px 8px', background: 'rgba(46,204,152,0.05)', border: '1px solid rgba(46,204,152,0.15)', borderRadius: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+            <span style={{ color: 'var(--accent)' }}>
               {orderType === 'limit'
                 ? `Will ${side} ${qty} ${symbol.replace('USDT','')} when price ${side === 'BUY' ? '≤' : '≥'} ${parseFloat(triggerPrice).toLocaleString()}`
                 : `Will SELL ${qty} ${symbol.replace('USDT','')} when price ≤ ${parseFloat(triggerPrice).toLocaleString()}`
               }
             </span>
             <br />
-            <span style={{ color: '#555' }}>Checked every 30s by the server</span>
+            <span style={{ color: 'var(--text-muted)' }}>Checked every 30s by the server</span>
           </div>
         )}
 
@@ -202,8 +201,9 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
           type="submit"
           style={{
             width: '100%', padding: '8px 0',
-            background: orderType === 'stop' ? '#ef5350' : (effectiveSide === 'BUY' ? '#26a69a' : '#ef5350'),
-            color: '#fff', border: 'none', borderRadius: 4, fontWeight: 700, cursor: 'pointer', fontSize: 13,
+            background: orderType === 'stop' ? 'var(--danger)' : (effectiveSide === 'BUY' ? 'var(--accent)' : 'var(--danger)'),
+            color: effectiveSide === 'BUY' && orderType !== 'stop' ? '#000' : 'var(--text-primary)',
+            border: 'none', borderRadius: 4, fontWeight: 700, cursor: 'pointer', fontSize: 13,
           }}
         >
           {orderType === 'market' && `${effectiveSide} ${symbol.replace('USDT', '')} (Market)`}
@@ -214,7 +214,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
 
       {pendingOrders.length > 0 && (
         <div style={{ marginTop: 14 }}>
-          <div style={{ color: '#9090b0', marginBottom: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ color: 'var(--text-muted)', marginBottom: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Open Orders ({pendingOrders.length})
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -222,29 +222,29 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
               <div key={order.id} style={{
                 display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto',
                 alignItems: 'center', padding: '5px 8px',
-                background: '#16213e', borderRadius: 4,
-                border: `1px solid ${order.status === 'PENDING' ? '#4fc3f733' : '#2a2a4e'}`,
+                background: 'var(--bg-hover)', borderRadius: 4,
+                border: `1px solid ${order.status === 'PENDING' ? 'rgba(46,204,152,0.2)' : 'var(--border)'}`,
                 fontSize: 11, gap: 4,
               }}>
                 <div>
-                  <span style={{ color: order.side === 'BUY' ? '#26a69a' : '#ef5350', fontWeight: 700 }}>{order.side}</span>
+                  <span style={{ color: order.side === 'BUY' ? 'var(--accent)' : 'var(--danger)', fontWeight: 700 }}>{order.side}</span>
                   {' '}
-                  <span style={{ color: '#555' }}>{order.orderType}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>{order.orderType}</span>
                 </div>
-                <div style={{ color: '#c0c0c0' }}>
+                <div style={{ color: 'var(--text-primary)' }}>
                   {order.triggerPrice
                     ? `@ ${order.triggerPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}`
                     : `@ ${order.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}`
                   }
                 </div>
                 <div>
-                  <span style={{ color: order.status === 'PENDING' ? '#ff9800' : '#26a69a', fontWeight: 600 }}>
+                  <span style={{ color: order.status === 'PENDING' ? '#ff9800' : 'var(--accent)', fontWeight: 600 }}>
                     {order.status}
                   </span>
                 </div>
                 <button
                   onClick={() => onCancelOrder(order.id)}
-                  style={{ padding: '2px 6px', background: 'transparent', border: '1px solid #444', borderRadius: 3, color: '#777', cursor: 'pointer', fontSize: 10 }}
+                  style={{ padding: '2px 6px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10 }}
                 >
                   ✕
                 </button>

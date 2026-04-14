@@ -10,7 +10,7 @@ const TradesPanel: React.FC<Props> = ({ trades }) => {
     <div style={{ height: '100%', overflowY: 'auto', fontSize: 12 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ color: '#666', borderBottom: '1px solid #2a2a4e', position: 'sticky', top: 0, background: '#1e1e35' }}>
+          <tr style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-secondary)' }}>
             <th style={{ padding: '4px 8px', textAlign: 'left' }}>Time</th>
             <th style={{ padding: '4px 8px', textAlign: 'right' }}>Price</th>
             <th style={{ padding: '4px 8px', textAlign: 'right' }}>Qty</th>
@@ -22,15 +22,15 @@ const TradesPanel: React.FC<Props> = ({ trades }) => {
             const isBuy = !trade.isBuyerMaker;
             const time = new Date(trade.time).toLocaleTimeString();
             return (
-              <tr key={i} style={{ borderBottom: '1px solid #1a1a2e' }}>
-                <td style={{ padding: '2px 8px', color: '#888' }}>{time}</td>
-                <td style={{ padding: '2px 8px', textAlign: 'right', color: isBuy ? '#26a69a' : '#ef5350' }}>
+              <tr key={i} style={{ borderBottom: '1px solid var(--bg-primary)' }}>
+                <td style={{ padding: '2px 8px', color: 'var(--text-muted)' }}>{time}</td>
+                <td style={{ padding: '2px 8px', textAlign: 'right', color: isBuy ? 'var(--accent)' : 'var(--danger)' }}>
                   {parseFloat(trade.price).toLocaleString(undefined, { maximumFractionDigits: 6 })}
                 </td>
-                <td style={{ padding: '2px 8px', textAlign: 'right', color: '#c0c0c0' }}>
+                <td style={{ padding: '2px 8px', textAlign: 'right', color: 'var(--text-primary)' }}>
                   {parseFloat(trade.qty).toFixed(4)}
                 </td>
-                <td style={{ padding: '2px 8px', textAlign: 'right', color: isBuy ? '#26a69a' : '#ef5350' }}>
+                <td style={{ padding: '2px 8px', textAlign: 'right', color: isBuy ? 'var(--accent)' : 'var(--danger)' }}>
                   {isBuy ? 'BUY' : 'SELL'}
                 </td>
               </tr>

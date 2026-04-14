@@ -61,7 +61,7 @@ const Legend = () => (
     ].map(l => (
       <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
         <div style={{ width: 12, height: 12, borderRadius: 2, background: l.bg }} />
-        <span style={{ color: '#777' }}>{l.label}</span>
+        <span style={{ color: 'var(--text-muted)' }}>{l.label}</span>
       </div>
     ))}
   </div>
@@ -103,32 +103,31 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
   const volumes = assets.map(a => a.volume_24h);
   const minVol = Math.min(...volumes);
   const maxVol = Math.max(...volumes);
-  const updatedTime = heatmapData?.updated_at ? new Date(heatmapData.updated_at).toLocaleTimeString() : null;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0f0f1e', color: '#e0e0e0' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <div style={{
         display: 'flex', alignItems: 'center', padding: isMobile ? '8px 12px' : '8px 16px',
-        background: '#16213e', borderBottom: '1px solid #2a2a4e', gap: 12, flexShrink: 0,
+        background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', gap: 12, flexShrink: 0,
       }}>
         <button
           onClick={onNavigateHome}
           style={{
-            background: 'transparent', border: '1px solid #3a3a5e', borderRadius: 6,
-            color: '#9090b0', padding: '4px 10px', cursor: 'pointer', fontSize: 13,
+            background: 'transparent', border: '1px solid var(--border)', borderRadius: 6,
+            color: 'var(--text-muted)', padding: '4px 10px', cursor: 'pointer', fontSize: 13,
           }}
         >
           ← {isMobile ? '' : 'Terminal'}
         </button>
-        <div style={{ fontWeight: 700, fontSize: isMobile ? 14 : 16, color: '#4fc3f7' }}>
+        <div style={{ fontWeight: 700, fontSize: isMobile ? 14 : 16, color: 'var(--accent)' }}>
           {isMobile ? 'Heatmap' : 'Market Heatmap'}
         </div>
         {heatmapData?.demo && (
-          <span style={{ padding: '2px 8px', background: '#ff980020', border: '1px solid #ff9800', borderRadius: 12, fontSize: 11, color: '#ff9800' }}>
+          <span style={{ padding: '2px 8px', background: 'rgba(255,152,0,0.08)', border: '1px solid #ff9800', borderRadius: 12, fontSize: 11, color: '#ff9800' }}>
             DEMO
           </span>
         )}
-        <div style={{ marginLeft: 'auto', fontSize: 12, color: countdown <= 5 ? '#ff9800' : '#555' }}>
+        <div style={{ marginLeft: 'auto', fontSize: 12, color: countdown <= 5 ? '#ff9800' : 'var(--text-muted)' }}>
           {isMobile ? `${countdown}s` : `Refreshing in ${countdown}s`}
         </div>
       </div>
@@ -136,7 +135,7 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
       <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? 8 : 16 }}>
         {!isMobile && (
           <div style={{ marginBottom: 12, display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, color: '#666' }}>Tile size = 24h volume · Color = % change</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Tile size = 24h volume · Color = % change</span>
             <Legend />
           </div>
         )}
@@ -147,7 +146,7 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
         )}
 
         {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: '#555', fontSize: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, color: 'var(--text-muted)', fontSize: 16 }}>
             Loading heatmap data...
           </div>
         ) : isMobile ? (
@@ -171,12 +170,12 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
                     WebkitTapHighlightColor: 'transparent',
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: 16, color: '#fff' }}>{asset.name}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{formatPrice(asset.price)}</div>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: 'rgba(232,234,240,0.95)' }}>{asset.name}</div>
+                  <div style={{ fontSize: 12, color: 'rgba(232,234,240,0.6)' }}>{formatPrice(asset.price)}</div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: isPositive ? '#a5d6a7' : '#ef9a9a', marginTop: 'auto' }}>
                     {isPositive ? '▲' : '▼'} {Math.abs(asset.change_pct).toFixed(2)}%
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
+                  <div style={{ fontSize: 10, color: 'rgba(232,234,240,0.35)' }}>
                     {formatVolume(asset.volume_24h)}
                   </div>
                 </div>
@@ -218,11 +217,11 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: col >= 4 ? 18 : 13, color: '#fff', lineHeight: 1.1 }}>
+                    <div style={{ fontWeight: 800, fontSize: col >= 4 ? 18 : 13, color: 'rgba(232,234,240,0.95)', lineHeight: 1.1 }}>
                       {asset.name}
                     </div>
                     {col >= 3 && (
-                      <div style={{ fontSize: col >= 4 ? 12 : 10, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
+                      <div style={{ fontSize: col >= 4 ? 12 : 10, color: 'rgba(232,234,240,0.6)', marginTop: 2 }}>
                         {formatPrice(asset.price)}
                       </div>
                     )}
@@ -232,7 +231,7 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
                       {isPositive ? '▲' : '▼'} {Math.abs(asset.change_pct).toFixed(2)}%
                     </div>
                     {col >= 4 && row >= 2 && (
-                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+                      <div style={{ fontSize: 10, color: 'rgba(232,234,240,0.4)', marginTop: 2 }}>
                         Vol {formatVolume(asset.volume_24h)}
                       </div>
                     )}

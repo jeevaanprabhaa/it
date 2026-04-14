@@ -53,7 +53,7 @@ const SecuritiesTable: React.FC<Props> = ({ selectedSymbol, onSelectSymbol }) =>
     <div style={{ height: '100%', overflowY: 'auto', fontSize: 12 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ color: '#666', borderBottom: '1px solid #2a2a4e' }}>
+          <tr style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>
             <th style={{ padding: '4px 8px', textAlign: 'left' }}>Symbol</th>
             <th style={{ padding: '4px 8px', textAlign: 'right' }}>Price</th>
             <th style={{ padding: '4px 8px', textAlign: 'right' }}>Change</th>
@@ -70,18 +70,18 @@ const SecuritiesTable: React.FC<Props> = ({ selectedSymbol, onSelectSymbol }) =>
                 onClick={() => onSelectSymbol(row.symbol)}
                 style={{
                   cursor: 'pointer',
-                  background: isSelected ? '#2a2a4e' : 'transparent',
-                  borderBottom: '1px solid #22223a',
+                  background: isSelected ? 'var(--bg-hover)' : 'transparent',
+                  borderBottom: '1px solid var(--border)',
                 }}
               >
-                <td style={{ padding: '4px 8px', color: '#e0e0e0', fontWeight: isSelected ? 600 : 400 }}>{row.symbol}</td>
-                <td style={{ padding: '4px 8px', textAlign: 'right', color: '#e0e0e0' }}>
+                <td style={{ padding: '4px 8px', color: 'var(--text-primary)', fontWeight: isSelected ? 600 : 400 }}>{row.symbol}</td>
+                <td style={{ padding: '4px 8px', textAlign: 'right', color: 'var(--text-primary)' }}>
                   {parseFloat(row.lastPrice).toLocaleString(undefined, { maximumFractionDigits: 6 })}
                 </td>
-                <td style={{ padding: '4px 8px', textAlign: 'right', color: change >= 0 ? '#26a69a' : '#ef5350' }}>
+                <td style={{ padding: '4px 8px', textAlign: 'right', color: change >= 0 ? 'var(--accent)' : 'var(--danger)' }}>
                   {change >= 0 ? '+' : ''}{change.toFixed(2)}%
                 </td>
-                <td style={{ padding: '4px 8px', textAlign: 'right', color: '#888' }}>
+                <td style={{ padding: '4px 8px', textAlign: 'right', color: 'var(--text-muted)' }}>
                   {parseFloat(row.volume).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </td>
               </tr>

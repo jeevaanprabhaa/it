@@ -66,19 +66,19 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
-      layout: { background: { color: '#1a1a2e' }, textColor: '#c0c0c0' },
-      grid: { vertLines: { color: '#2a2a3e' }, horzLines: { color: '#2a2a3e' } },
+      layout: { background: { color: '#0D0F14' }, textColor: '#7B8099' },
+      grid: { vertLines: { color: '#1E2235' }, horzLines: { color: '#1E2235' } },
       crosshair: { mode: 1 },
-      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#3a3a5e' },
-      rightPriceScale: { borderColor: '#3a3a5e' },
+      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#1E2235' },
+      rightPriceScale: { borderColor: '#1E2235' },
     });
     chartRef.current = chart;
     candleRef.current = chart.addCandlestickSeries({
-      upColor: '#26a69a', downColor: '#ef5350',
-      borderUpColor: '#26a69a', borderDownColor: '#ef5350',
-      wickUpColor: '#26a69a', wickDownColor: '#ef5350',
+      upColor: '#2ECC98', downColor: '#E5534B',
+      borderUpColor: '#2ECC98', borderDownColor: '#E5534B',
+      wickUpColor: '#2ECC98', wickDownColor: '#E5534B',
     });
-    smaRef.current = chart.addLineSeries({ color: '#2196F3', lineWidth: 1, title: 'SMA20' });
+    smaRef.current = chart.addLineSeries({ color: '#2ECC98', lineWidth: 1, title: 'SMA20' });
     upperRef.current = chart.addLineSeries({ color: '#FF9800', lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
     lowerRef.current = chart.addLineSeries({ color: '#FF9800', lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
     vwapRef.current = chart.addLineSeries({ color: '#ce93d8', lineWidth: 2, title: 'VWAP' });
@@ -145,8 +145,8 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
     display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
     padding: '2px 8px', borderRadius: 4,
     background: checked ? `${color}18` : 'transparent',
-    border: `1px solid ${checked ? color : '#3a3a5e'}`,
-    color: checked ? color : '#666',
+    border: `1px solid ${checked ? color : '#1E2235'}`,
+    color: checked ? color : '#7B8099',
     fontSize: 11, fontWeight: 600, userSelect: 'none',
     transition: 'all 0.15s',
   });
@@ -165,7 +165,7 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
         position: 'absolute', top: 8, left: 8, zIndex: 10,
         display: 'flex', gap: 6, alignItems: 'center',
       }}>
-        <div style={checkboxStyle('#2196F3', showSma)} onClick={() => setShowSma(v => !v)}>
+        <div style={checkboxStyle('#2ECC98', showSma)} onClick={() => setShowSma(v => !v)}>
           <span>SMA20</span>
         </div>
         <div style={checkboxStyle('#FF9800', showBB)} onClick={() => setShowBB(v => !v)}>
