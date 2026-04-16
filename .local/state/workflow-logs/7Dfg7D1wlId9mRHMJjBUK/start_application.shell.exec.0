@@ -1,0 +1,37 @@
+Starting StockSharp Web Terminal...
+
+Backend server started (PID: 74)
+StockSharp backend running on port 3001
+[1G[0K⠙[1G[0K
+> stocksharp-client@1.0.0 dev
+> vite --host 0.0.0.0 --port 5000
+
+[1G[0K⠙[1G[0K
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J
+  [32m[1mVITE[22m v4.5.14[39m  [2mready in [0m[1m492[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5000[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.31.92.226:[1m5000[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh[22m[2m to show help[22m
