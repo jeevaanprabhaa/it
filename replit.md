@@ -82,6 +82,7 @@ Starts: Express backend (port 3001) + Vite dev server (port 5000)
 - If STRIPE_SECRET_KEY is absent, the backend starts normally and payment endpoints return "Payment not configured".
 - CryptoCompare streaming can use CRYPTOCOMPARE_API_KEY from Replit Secrets; REST market data works without a key.
 - Note: Stripe integration was set up manually using keys (not via Replit Stripe connector)
+- Current UI theme is a dark professional trading terminal palette defined in `client/index.html` using `--bg-base`, `--bg-panel`, `--bg-card`, `--bg-hover`, `--accent`, `--accent-dim`, `--danger`, `--danger-dim`, `--text-primary`, `--text-muted`, `--border`, and `--border-strong`.
 - CryptoCompare API is free-tier (no API key needed for basic endpoints)
 - Session IDs stored in localStorage — wallet resets if localStorage is cleared
 - Advanced orders and journal entries are in-memory (reset on server restart)

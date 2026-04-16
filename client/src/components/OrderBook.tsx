@@ -16,7 +16,7 @@ const OrderBook: React.FC<Props> = ({ orderBook, lastPrice }) => {
   const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 6 });
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)', fontSize: 12 }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-panel)', fontSize: 12 }}>
       <div style={{ padding: '6px 8px', borderBottom: '1px solid var(--border)', fontWeight: 600, color: 'var(--text-muted)' }}>
         Order Book
       </div>
@@ -27,7 +27,7 @@ const OrderBook: React.FC<Props> = ({ orderBook, lastPrice }) => {
         <div style={{ display: 'flex', flexDirection: 'column-reverse' }}>
           {orderBook.asks.slice(0, 15).map((ask, i) => (
             <div key={i} style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '1px 8px' }}>
-              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: `${(ask.quantity / maxQty) * 100}%`, background: 'rgba(229,83,75,0.15)' }} />
+              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: `${(ask.quantity / maxQty) * 100}%`, background: 'var(--danger-dim)' }} />
               <span style={{ color: 'var(--danger)', position: 'relative' }}>{fmt(ask.price)}</span>
               <span style={{ textAlign: 'right', position: 'relative', color: 'var(--text-primary)' }}>{fmt(ask.quantity)}</span>
               <span style={{ textAlign: 'right', position: 'relative', color: 'var(--text-muted)' }}>{fmt(ask.price * ask.quantity)}</span>
@@ -41,7 +41,7 @@ const OrderBook: React.FC<Props> = ({ orderBook, lastPrice }) => {
         )}
         {orderBook.bids.slice(0, 15).map((bid, i) => (
           <div key={i} style={{ position: 'relative', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '1px 8px' }}>
-            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: `${(bid.quantity / maxQty) * 100}%`, background: 'rgba(46,204,152,0.15)' }} />
+            <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: `${(bid.quantity / maxQty) * 100}%`, background: 'var(--accent-dim)' }} />
             <span style={{ color: 'var(--accent)', position: 'relative' }}>{fmt(bid.price)}</span>
             <span style={{ textAlign: 'right', position: 'relative', color: 'var(--text-primary)' }}>{fmt(bid.quantity)}</span>
             <span style={{ textAlign: 'right', position: 'relative', color: 'var(--text-muted)' }}>{fmt(bid.price * bid.quantity)}</span>

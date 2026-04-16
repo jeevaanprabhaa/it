@@ -10,7 +10,7 @@ const TradesPanel: React.FC<Props> = ({ trades }) => {
     <div style={{ height: '100%', overflowY: 'auto', fontSize: 12 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-secondary)' }}>
+          <tr style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg-panel)' }}>
             <th style={{ padding: '4px 8px', textAlign: 'left' }}>Time</th>
             <th style={{ padding: '4px 8px', textAlign: 'right' }}>Price</th>
             <th style={{ padding: '4px 8px', textAlign: 'right' }}>Qty</th>
@@ -22,7 +22,7 @@ const TradesPanel: React.FC<Props> = ({ trades }) => {
             const isBuy = !trade.isBuyerMaker;
             const time = new Date(trade.time).toLocaleTimeString();
             return (
-              <tr key={i} style={{ borderBottom: '1px solid var(--bg-primary)' }}>
+              <tr key={i} style={{ borderBottom: '1px solid var(--bg-base)' }}>
                 <td style={{ padding: '2px 8px', color: 'var(--text-muted)' }}>{time}</td>
                 <td style={{ padding: '2px 8px', textAlign: 'right', color: isBuy ? 'var(--accent)' : 'var(--danger)' }}>
                   {parseFloat(trade.price).toLocaleString(undefined, { maximumFractionDigits: 6 })}

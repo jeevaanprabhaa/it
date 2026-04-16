@@ -17,7 +17,7 @@ const ORDER_TYPES: { type: OrderType; label: string; desc: string }[] = [
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '6px 8px',
-  background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 4,
+  background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 4,
   color: 'var(--text-primary)', fontSize: 12, outline: 'none',
 };
 
@@ -86,7 +86,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
               flex: 1, padding: '4px 0', fontSize: 11, fontWeight: 600,
               border: `1px solid ${orderType === ot.type ? 'var(--accent)' : 'var(--border)'}`,
               borderRadius: 4, cursor: 'pointer',
-              background: orderType === ot.type ? 'rgba(46,204,152,0.1)' : 'transparent',
+              background: orderType === ot.type ? 'var(--accent-dim)' : 'var(--bg-card)',
               color: orderType === ot.type ? 'var(--accent)' : 'var(--text-muted)',
             }}
           >
@@ -99,13 +99,13 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
         <div style={{ display: 'flex', marginBottom: 10, borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border)' }}>
           <button
             onClick={() => setSide('BUY')}
-            style={{ flex: 1, padding: '5px 0', background: side === 'BUY' ? 'var(--accent)' : 'transparent', color: side === 'BUY' ? '#000' : 'var(--text-muted)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
+            style={{ flex: 1, padding: '5px 0', background: side === 'BUY' ? 'var(--accent)' : 'var(--bg-card)', color: side === 'BUY' ? 'var(--bg-base)' : 'var(--text-muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
           >
             BUY
           </button>
           <button
             onClick={() => setSide('SELL')}
-            style={{ flex: 1, padding: '5px 0', background: side === 'SELL' ? 'var(--danger)' : 'transparent', color: side === 'SELL' ? 'var(--text-primary)' : 'var(--text-muted)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
+            style={{ flex: 1, padding: '5px 0', background: side === 'SELL' ? 'var(--danger)' : 'var(--bg-card)', color: side === 'SELL' ? 'var(--text-primary)' : 'var(--text-muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
           >
             SELL
           </button>
@@ -113,7 +113,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
       )}
 
       {orderType === 'stop' && (
-        <div style={{ padding: '4px 8px', marginBottom: 8, background: 'rgba(229,83,75,0.08)', border: '1px solid rgba(229,83,75,0.25)', borderRadius: 4, fontSize: 11, color: 'var(--danger)' }}>
+        <div style={{ padding: '4px 8px', marginBottom: 8, background: 'var(--danger-dim)', border: '1px solid var(--danger)', borderRadius: 4, fontSize: 11, color: 'var(--danger)' }}>
           Stop-Loss automatically sells when price falls to the stop level.
         </div>
       )}
@@ -145,7 +145,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
                 type="number" step="any" value={triggerPrice}
                 onChange={e => setTriggerPrice(e.target.value)}
                 placeholder={side === 'BUY' ? 'Below current price' : 'Above current price'}
-                style={{ ...inputStyle, borderColor: 'rgba(46,204,152,0.4)' }}
+                style={{ ...inputStyle, borderColor: 'var(--accent)' }}
               />
             </div>
           </>
@@ -168,7 +168,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
                 type="number" step="any" value={triggerPrice}
                 onChange={e => setTriggerPrice(e.target.value)}
                 placeholder="Below current price"
-                style={{ ...inputStyle, borderColor: 'rgba(229,83,75,0.4)' }}
+                style={{ ...inputStyle, borderColor: 'var(--danger)' }}
               />
             </div>
           </>
@@ -185,7 +185,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
         </div>
 
         {orderType !== 'market' && triggerPrice && qty && (
-          <div style={{ marginBottom: 8, padding: '5px 8px', background: 'rgba(46,204,152,0.05)', border: '1px solid rgba(46,204,152,0.15)', borderRadius: 4, fontSize: 11, color: 'var(--text-muted)' }}>
+          <div style={{ marginBottom: 8, padding: '5px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 4, fontSize: 11, color: 'var(--text-muted)' }}>
             <span style={{ color: 'var(--accent)' }}>
               {orderType === 'limit'
                 ? `Will ${side} ${qty} ${symbol.replace('USDT','')} when price ${side === 'BUY' ? '≤' : '≥'} ${parseFloat(triggerPrice).toLocaleString()}`
@@ -202,8 +202,8 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
           style={{
             width: '100%', padding: '8px 0',
             background: orderType === 'stop' ? 'var(--danger)' : (effectiveSide === 'BUY' ? 'var(--accent)' : 'var(--danger)'),
-            color: effectiveSide === 'BUY' && orderType !== 'stop' ? '#000' : 'var(--text-primary)',
-            border: 'none', borderRadius: 4, fontWeight: 700, cursor: 'pointer', fontSize: 13,
+            color: effectiveSide === 'BUY' && orderType !== 'stop' ? 'var(--bg-base)' : 'var(--text-primary)',
+            border: '1px solid var(--border)', borderRadius: 4, fontWeight: 700, cursor: 'pointer', fontSize: 13,
           }}
         >
           {orderType === 'market' && `${effectiveSide} ${symbol.replace('USDT', '')} (Market)`}
@@ -223,7 +223,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
                 display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto',
                 alignItems: 'center', padding: '5px 8px',
                 background: 'var(--bg-hover)', borderRadius: 4,
-                border: `1px solid ${order.status === 'PENDING' ? 'rgba(46,204,152,0.2)' : 'var(--border)'}`,
+                border: `1px solid ${order.status === 'PENDING' ? 'var(--accent)' : 'var(--border)'}`,
                 fontSize: 11, gap: 4,
               }}>
                 <div>
@@ -238,13 +238,13 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
                   }
                 </div>
                 <div>
-                  <span style={{ color: order.status === 'PENDING' ? '#ff9800' : 'var(--accent)', fontWeight: 600 }}>
+                  <span style={{ color: order.status === 'PENDING' ? 'var(--accent)' : 'var(--accent)', fontWeight: 600 }}>
                     {order.status}
                   </span>
                 </div>
                 <button
                   onClick={() => onCancelOrder(order.id)}
-                  style={{ padding: '2px 6px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10 }}
+                  style={{ padding: '2px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10 }}
                 >
                   ✕
                 </button>

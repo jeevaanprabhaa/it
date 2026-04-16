@@ -21,12 +21,9 @@ interface Props {
 }
 
 function getTileColor(change: number): { bg: string; border: string } {
-  if (change > 5)  return { bg: '#1b5e20', border: '#2e7d32' };
-  if (change > 2)  return { bg: '#2e7d32', border: '#388e3c' };
-  if (change > 0)  return { bg: '#1b3a20', border: '#2d5a2e' };
-  if (change > -2) return { bg: '#3a1a1a', border: '#5a2d2d' };
-  if (change > -5) return { bg: '#7f1f1f', border: '#c62828' };
-  return             { bg: '#b71c1c', border: '#d32f2f' };
+  if (change > 0)  return { bg: 'var(--accent-dim)', border: 'var(--accent)' };
+  if (change > -2) return { bg: 'var(--bg-card)', border: 'var(--border-strong)' };
+  return             { bg: 'var(--danger-dim)', border: 'var(--danger)' };
 }
 
 function formatPrice(price: number): string {
@@ -56,11 +53,10 @@ function computeSpan(volume: number, minVol: number, maxVol: number): { col: num
 const Legend = () => (
   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
     {[
-      { label: '>+5%', bg: '#1b5e20' }, { label: '+2%', bg: '#2e7d32' }, { label: '0%', bg: '#1b3a20' },
-      { label: '-2%', bg: '#3a1a1a' }, { label: '-5%', bg: '#7f1f1f' }, { label: '<-5%', bg: '#b71c1c' },
+      { label: '>0%', bg: 'var(--accent-dim)' }, { label: '≈0%', bg: 'var(--bg-card)' }, { label: '<-2%', bg: 'var(--danger-dim)' },
     ].map(l => (
       <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
-        <div style={{ width: 12, height: 12, borderRadius: 2, background: l.bg }} />
+        <div style={{ width: 12, height: 12, borderRadius: 2, background: l.bg, border: '1px solid var(--border-strong)' }} />
         <span style={{ color: 'var(--text-muted)' }}>{l.label}</span>
       </div>
     ))}
@@ -105,15 +101,15 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
   const maxVol = Math.max(...volumes);
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <div style={{
         display: 'flex', alignItems: 'center', padding: isMobile ? '8px 12px' : '8px 16px',
-        background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', gap: 12, flexShrink: 0,
+        background: 'var(--bg-panel)', borderBottom: '1px solid var(--border)', gap: 12, flexShrink: 0,
       }}>
         <button
           onClick={onNavigateHome}
           style={{
-            background: 'transparent', border: '1px solid var(--border)', borderRadius: 6,
+            background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6,
             color: 'var(--text-muted)', padding: '4px 10px', cursor: 'pointer', fontSize: 13,
           }}
         >
@@ -123,11 +119,11 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
           {isMobile ? 'Heatmap' : 'Market Heatmap'}
         </div>
         {heatmapData?.demo && (
-          <span style={{ padding: '2px 8px', background: 'rgba(255,152,0,0.08)', border: '1px solid #ff9800', borderRadius: 12, fontSize: 11, color: '#ff9800' }}>
+          <span style={{ padding: '2px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 12, fontSize: 11, color: 'var(--accent)' }}>
             DEMO
           </span>
         )}
-        <div style={{ marginLeft: 'auto', fontSize: 12, color: countdown <= 5 ? '#ff9800' : 'var(--text-muted)' }}>
+        <div style={{ marginLeft: 'auto', fontSize: 12, color: countdown <= 5 ? 'var(--accent)' : 'var(--text-muted)' }}>
           {isMobile ? `${countdown}s` : `Refreshing in ${countdown}s`}
         </div>
       </div>
@@ -167,15 +163,15 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
                     padding: '12px 10px', cursor: 'pointer',
                     display: 'flex', flexDirection: 'column', gap: 4,
                     minHeight: 90,
-                    WebkitTapHighlightColor: 'transparent',
+                    WebkitTapHighlightColor: 'var(--accent-dim)',
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: 16, color: 'rgba(232,234,240,0.95)' }}>{asset.name}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(232,234,240,0.6)' }}>{formatPrice(asset.price)}</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: isPositive ? '#a5d6a7' : '#ef9a9a', marginTop: 'auto' }}>
+                  <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--text-primary)' }}>{asset.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{formatPrice(asset.price)}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: isPositive ? 'var(--accent)' : 'var(--danger)', marginTop: 'auto' }}>
                     {isPositive ? '▲' : '▼'} {Math.abs(asset.change_pct).toFixed(2)}%
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(232,234,240,0.35)' }}>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
                     {formatVolume(asset.volume_24h)}
                   </div>
                 </div>
@@ -217,21 +213,21 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 800, fontSize: col >= 4 ? 18 : 13, color: 'rgba(232,234,240,0.95)', lineHeight: 1.1 }}>
+                    <div style={{ fontWeight: 800, fontSize: col >= 4 ? 18 : 13, color: 'var(--text-primary)', lineHeight: 1.1 }}>
                       {asset.name}
                     </div>
                     {col >= 3 && (
-                      <div style={{ fontSize: col >= 4 ? 12 : 10, color: 'rgba(232,234,240,0.6)', marginTop: 2 }}>
+                      <div style={{ fontSize: col >= 4 ? 12 : 10, color: 'var(--text-muted)', marginTop: 2 }}>
                         {formatPrice(asset.price)}
                       </div>
                     )}
                   </div>
                   <div>
-                    <div style={{ fontSize: col >= 5 ? 20 : col >= 3 ? 15 : 12, fontWeight: 700, color: isPositive ? '#a5d6a7' : '#ef9a9a' }}>
+                    <div style={{ fontSize: col >= 5 ? 20 : col >= 3 ? 15 : 12, fontWeight: 700, color: isPositive ? 'var(--accent)' : 'var(--danger)' }}>
                       {isPositive ? '▲' : '▼'} {Math.abs(asset.change_pct).toFixed(2)}%
                     </div>
                     {col >= 4 && row >= 2 && (
-                      <div style={{ fontSize: 10, color: 'rgba(232,234,240,0.4)', marginTop: 2 }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
                         Vol {formatVolume(asset.volume_24h)}
                       </div>
                     )}

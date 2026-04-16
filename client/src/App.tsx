@@ -147,7 +147,7 @@ const App: React.FC = () => {
   }
   if (page === 'coach') {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
         <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
         <div style={{ flex: 1, minHeight: 0 }}>
           <AICoachPage sessionId={sessionId} onBack={() => setPage('terminal')} />
@@ -158,7 +158,7 @@ const App: React.FC = () => {
   }
   if (page === 'leaderboard') {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
         <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
         <div style={{ flex: 1, minHeight: 0 }}>
           <LeaderboardPage sessionId={sessionId} onBack={() => setPage('terminal')} />
@@ -171,15 +171,15 @@ const App: React.FC = () => {
   // ── Mobile Layout ────────────────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', color: 'var(--text-primary)', position: 'relative' }}>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)', position: 'relative' }}>
         <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
-        <div style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', gap: 8, flexShrink: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, background: 'linear-gradient(135deg, var(--accent), #22a878)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>AlgoTrader</div>
-          {isDemo && <span style={{ padding: '1px 6px', background: 'rgba(255,152,0,0.12)', border: '1px solid #ff9800', borderRadius: 10, fontSize: 10, color: '#ff9800' }}>DEMO</span>}
+        <div style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border)', gap: 8, flexShrink: 0 }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--accent)' }}>AlgoTrader</div>
+          {isDemo && <span style={{ padding: '1px 6px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 10, fontSize: 10, color: 'var(--accent)' }}>DEMO</span>}
           <select value={symbol} onChange={e => setSymbol(e.target.value)} style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 6px', fontSize: 12, flex: 1 }}>
             {SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <button onClick={() => setPage('heatmap')} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '3px 8px', cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>🗺</button>
+          <button onClick={() => setPage('heatmap')} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '3px 8px', cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>🗺</button>
           {ticker && (
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: change >= 0 ? 'var(--accent)' : 'var(--danger)', lineHeight: 1 }}>
@@ -195,9 +195,9 @@ const App: React.FC = () => {
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
           {mobileTab === 'charts' && (
             <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ display: 'flex', gap: 2, padding: '4px 8px', background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', gap: 2, padding: '4px 8px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
                 {INTERVALS.map(iv => (
-                  <button key={iv} onClick={() => setInterval(iv)} style={{ padding: '3px 7px', fontSize: 11, border: 'none', borderRadius: 3, cursor: 'pointer', flexShrink: 0, background: interval === iv ? 'var(--accent)' : 'transparent', color: interval === iv ? '#000' : 'var(--text-muted)' }}>{iv}</button>
+                  <button key={iv} onClick={() => setInterval(iv)} style={{ padding: '3px 7px', fontSize: 11, border: '1px solid var(--border)', borderRadius: 3, cursor: 'pointer', flexShrink: 0, background: interval === iv ? 'var(--accent)' : 'var(--bg-card)', color: interval === iv ? 'var(--bg-base)' : 'var(--text-muted)' }}>{iv}</button>
                 ))}
               </div>
               <div style={{ flex: 1, minHeight: 0 }}><Chart klines={klines} symbol={symbol} /></div>
@@ -211,8 +211,8 @@ const App: React.FC = () => {
           {mobileTab === 'portfolio' && (
             <div style={{ height: '100%', overflow: 'auto', padding: 8 }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                <button onClick={() => setPage('coach')} style={{ flex: 1, padding: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--accent)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>🤖 AI Coach</button>
-                <button onClick={() => setPage('leaderboard')} style={{ flex: 1, padding: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, color: '#ffd700', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>🏆 Leaderboard</button>
+                <button onClick={() => setPage('coach')} style={{ flex: 1, padding: '10px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--accent)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>🤖 AI Coach</button>
+                <button onClick={() => setPage('leaderboard')} style={{ flex: 1, padding: '10px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--accent)', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>🏆 Leaderboard</button>
               </div>
               <MobileOrdersTable orders={orders} onCancel={handleCancelOrder} />
             </div>
@@ -225,21 +225,21 @@ const App: React.FC = () => {
         {mobileTab === 'charts' && (
           <button
             onClick={() => setShowMobileBuySell(v => !v)}
-            style={{ position: 'absolute', right: 16, bottom: 72, width: 52, height: 52, borderRadius: '50%', background: showMobileBuySell ? 'var(--danger)' : 'linear-gradient(135deg, var(--accent), #22a878)', color: '#000', border: 'none', fontSize: 22, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 20px rgba(46,204,152,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
+            style={{ position: 'absolute', right: 16, bottom: 72, width: 52, height: 52, borderRadius: '50%', background: showMobileBuySell ? 'var(--danger)' : 'linear-gradient(135deg, var(--accent), var(--accent))', color: 'var(--bg-base)', border: '1px solid var(--border)', fontSize: 22, fontWeight: 900, cursor: 'pointer', boxShadow: '0 4px 20px var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}
           >
             {showMobileBuySell ? '✕' : '⇅'}
           </button>
         )}
 
         {showMobileBuySell && mobileTab === 'charts' && (
-          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 56, background: 'var(--bg-primary)', borderTop: '1px solid var(--border)', zIndex: 90, maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 56, background: 'var(--bg-base)', borderTop: '1px solid var(--border)', zIndex: 90, maxHeight: '70vh', overflowY: 'auto' }}>
             <OrderPanel symbol={symbol} lastPrice={ticker?.lastPrice} orders={orders} onPlaceOrder={handlePlaceOrder} onCancelOrder={handleCancelOrder} />
           </div>
         )}
 
-        <nav style={{ display: 'flex', background: 'var(--bg-primary)', borderTop: '1px solid var(--border)', flexShrink: 0, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <nav style={{ display: 'flex', background: 'var(--bg-base)', borderTop: '1px solid var(--border)', flexShrink: 0, paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {MOBILE_TABS.map(tab => (
-            <button key={tab.id} onClick={() => { setMobileTab(tab.id); setShowMobileBuySell(false); }} style={{ flex: 1, padding: '8px 4px 6px', border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, borderTop: mobileTab === tab.id ? '2px solid var(--accent)' : '2px solid transparent' }}>
+            <button key={tab.id} onClick={() => { setMobileTab(tab.id); setShowMobileBuySell(false); }} style={{ flex: 1, padding: '8px 4px 6px', border: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, borderTop: mobileTab === tab.id ? '2px solid var(--accent)' : '2px solid var(--border)' }}>
               <span style={{ fontSize: 18 }}>{tab.icon}</span>
               <span style={{ fontSize: 9, color: mobileTab === tab.id ? 'var(--accent)' : 'var(--text-muted)', fontWeight: mobileTab === tab.id ? 700 : 400 }}>{tab.label}</span>
             </button>
@@ -261,11 +261,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
 
-      <div style={{ display: 'flex', alignItems: 'center', padding: '5px 12px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', gap: 10, flexShrink: 0 }}>
-        <div style={{ fontWeight: 800, fontSize: 16, background: 'linear-gradient(135deg, var(--accent), #22a878)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginRight: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '5px 12px', background: 'var(--bg-panel)', borderBottom: '1px solid var(--border)', gap: 10, flexShrink: 0 }}>
+        <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--accent)', marginRight: 4 }}>
           AlgoTrader
         </div>
 
@@ -277,13 +277,13 @@ const App: React.FC = () => {
           <button
             key={btn.id}
             onClick={() => setPage(btn.page)}
-            style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '3px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '3px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
           >
             {btn.icon} {btn.label}
           </button>
         ))}
 
-        {isDemo && <span style={{ padding: '2px 8px', background: 'rgba(255,152,0,0.08)', border: '1px solid #ff9800', borderRadius: 12, fontSize: 10, color: '#ff9800' }}>DEMO</span>}
+        {isDemo && <span style={{ padding: '2px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 12, fontSize: 10, color: 'var(--accent)' }}>DEMO</span>}
 
         <select value={symbol} onChange={e => setSymbol(e.target.value)} style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 13 }}>
           {SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -291,7 +291,7 @@ const App: React.FC = () => {
 
         <div style={{ display: 'flex', gap: 2 }}>
           {INTERVALS.map(iv => (
-            <button key={iv} onClick={() => setInterval(iv)} style={{ padding: '3px 8px', fontSize: 12, border: 'none', borderRadius: 3, cursor: 'pointer', background: interval === iv ? 'var(--accent)' : 'transparent', color: interval === iv ? '#000' : 'var(--text-muted)', fontWeight: interval === iv ? 700 : 400 }}>{iv}</button>
+            <button key={iv} onClick={() => setInterval(iv)} style={{ padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 3, cursor: 'pointer', background: interval === iv ? 'var(--accent)' : 'var(--bg-card)', color: interval === iv ? 'var(--bg-base)' : 'var(--text-muted)', fontWeight: interval === iv ? 700 : 400 }}>{iv}</button>
           ))}
         </div>
 
@@ -313,19 +313,19 @@ const App: React.FC = () => {
           <div style={{ flex: 1, minHeight: 0 }}>
             <Chart klines={klines} symbol={symbol} />
           </div>
-          <div style={{ height: 265, borderTop: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ height: 265, borderTop: '1px solid var(--border)', background: 'var(--bg-panel)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
               {desktopBottomTabs.map(tab => (
-                <button key={tab} onClick={() => setBottomTab(tab)} style={{ padding: '6px 14px', border: 'none', cursor: 'pointer', fontSize: 12, background: bottomTab === tab ? 'var(--bg-hover)' : 'transparent', color: bottomTab === tab ? 'var(--text-primary)' : 'var(--text-muted)', borderBottom: bottomTab === tab ? '2px solid var(--accent)' : '2px solid transparent', whiteSpace: 'nowrap', position: 'relative' }}>
+                <button key={tab} onClick={() => setBottomTab(tab)} style={{ padding: '6px 14px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 12, background: bottomTab === tab ? 'var(--bg-hover)' : 'var(--bg-card)', color: bottomTab === tab ? 'var(--text-primary)' : 'var(--text-muted)', borderBottom: bottomTab === tab ? '2px solid var(--accent)' : '2px solid var(--border)', whiteSpace: 'nowrap', position: 'relative' }}>
                   {tabLabel(tab)}
                   {tab === 'orders' && pendingCount > 0 && (
-                    <span style={{ marginLeft: 5, padding: '1px 5px', background: '#ff9800', borderRadius: 8, fontSize: 10, color: '#000', fontWeight: 700 }}>{pendingCount}</span>
+                    <span style={{ marginLeft: 5, padding: '1px 5px', background: 'var(--accent)', borderRadius: 8, fontSize: 10, color: 'var(--bg-base)', fontWeight: 700 }}>{pendingCount}</span>
                   )}
                 </button>
               ))}
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', padding: '0 10px' }}>
-                <button onClick={() => setPage('coach')} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--accent)', padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>🤖 AI Coach</button>
-                <button onClick={() => setPage('leaderboard')} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 6, color: '#ffd700', padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>🏆 Board</button>
+                <button onClick={() => setPage('coach')} style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--accent)', padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>🤖 AI Coach</button>
+                <button onClick={() => setPage('leaderboard')} style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--accent)', padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>🏆 Board</button>
               </div>
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -358,7 +358,7 @@ const MobileOrdersTable: React.FC<{ orders: Order[]; onCancel: (id: string) => v
     </thead>
     <tbody>
       {orders.map(o => (
-        <tr key={o.id} style={{ borderBottom: '1px solid var(--bg-secondary)' }}>
+        <tr key={o.id} style={{ borderBottom: '1px solid var(--bg-panel)' }}>
           <td style={{ padding: '4px 6px' }}>{o.symbol}</td>
           <td style={{ padding: '4px 6px', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{o.orderType}</td>
           <td style={{ padding: '4px 6px', color: o.side === 'BUY' ? 'var(--accent)' : 'var(--danger)' }}>{o.side}</td>
@@ -366,10 +366,10 @@ const MobileOrdersTable: React.FC<{ orders: Order[]; onCancel: (id: string) => v
           <td style={{ padding: '4px 6px', textAlign: 'right', color: o.pnl !== undefined ? (o.pnl >= 0 ? 'var(--accent)' : 'var(--danger)') : 'var(--text-muted)' }}>
             {o.pnl !== undefined ? `${o.pnl >= 0 ? '+' : ''}$${o.pnl.toFixed(2)}` : '—'}
           </td>
-          <td style={{ padding: '4px 6px', textAlign: 'right', fontSize: 10, color: o.status === 'FILLED' ? 'var(--accent)' : o.status === 'CANCELLED' ? 'var(--text-muted)' : '#ff9800' }}>
+          <td style={{ padding: '4px 6px', textAlign: 'right', fontSize: 10, color: o.status === 'FILLED' ? 'var(--accent)' : o.status === 'CANCELLED' ? 'var(--text-muted)' : 'var(--accent)' }}>
             {o.status}
             {(o.status === 'OPEN' || o.status === 'PENDING') && (
-              <button onClick={() => onCancel(o.id)} style={{ marginLeft: 4, padding: '0 4px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 2, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 9 }}>✕</button>
+              <button onClick={() => onCancel(o.id)} style={{ marginLeft: 4, padding: '0 4px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 2, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 9 }}>✕</button>
             )}
           </td>
         </tr>
@@ -391,7 +391,7 @@ const DesktopOrdersTable: React.FC<{ orders: Order[]; onCancel: (id: string) => 
       </thead>
       <tbody>
         {orders.map(o => (
-          <tr key={o.id} style={{ borderBottom: '1px solid var(--bg-secondary)' }}>
+          <tr key={o.id} style={{ borderBottom: '1px solid var(--bg-panel)' }}>
             <td style={{ padding: '3px 8px' }}>{o.symbol}</td>
             <td style={{ padding: '3px 8px', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{o.orderType || 'market'}</td>
             <td style={{ padding: '3px 8px', color: o.side === 'BUY' ? 'var(--accent)' : 'var(--danger)' }}>{o.side}</td>
@@ -401,12 +401,12 @@ const DesktopOrdersTable: React.FC<{ orders: Order[]; onCancel: (id: string) => 
             <td style={{ padding: '3px 8px', textAlign: 'right', color: o.pnl !== undefined ? (o.pnl >= 0 ? 'var(--accent)' : 'var(--danger)') : 'var(--text-muted)' }}>
               {o.pnl !== undefined ? `${o.pnl >= 0 ? '+' : ''}$${o.pnl.toFixed(2)}` : '—'}
             </td>
-            <td style={{ padding: '3px 8px', textAlign: 'right', fontSize: 11, color: o.status === 'FILLED' ? 'var(--accent)' : o.status === 'CANCELLED' ? 'var(--text-muted)' : '#ff9800', fontWeight: 600 }}>
+            <td style={{ padding: '3px 8px', textAlign: 'right', fontSize: 11, color: o.status === 'FILLED' ? 'var(--accent)' : o.status === 'CANCELLED' ? 'var(--text-muted)' : 'var(--accent)', fontWeight: 600 }}>
               {o.status}
             </td>
             <td style={{ padding: '3px 8px' }}>
               {(o.status === 'OPEN' || o.status === 'PENDING') && (
-                <button onClick={() => onCancel(o.id)} style={{ padding: '1px 6px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10 }}>✕</button>
+                <button onClick={() => onCancel(o.id)} style={{ padding: '1px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10 }}>✕</button>
               )}
             </td>
           </tr>

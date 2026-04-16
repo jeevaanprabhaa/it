@@ -8,11 +8,11 @@ interface Props {
 }
 
 const EMOTION_COLORS: Record<Emotion, string> = {
-  confident: '#2ECC98',
-  fearful: '#E5534B',
-  fomo: '#ff9800',
-  neutral: '#78909c',
-  greedy: '#ab47bc',
+  confident: 'var(--accent)',
+  fearful: 'var(--danger)',
+  fomo: 'var(--accent)',
+  neutral: 'var(--text-muted)',
+  greedy: 'var(--text-muted)',
 };
 
 const EMOTION_LABELS: Record<Emotion, string> = {
@@ -33,7 +33,7 @@ const JournalModal: React.FC<Props> = ({ order, onSave, onSkip }) => {
   const pnlColor = pnl >= 0 ? 'var(--accent)' : 'var(--danger)';
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '7px 10px', background: 'var(--bg-primary)',
+    width: '100%', padding: '7px 10px', background: 'var(--bg-base)',
     border: '1px solid var(--border)', borderRadius: 5, color: 'var(--text-primary)',
     fontSize: 13, resize: 'none' as const, outline: 'none',
     fontFamily: 'inherit',
@@ -41,12 +41,12 @@ const JournalModal: React.FC<Props> = ({ order, onSave, onSkip }) => {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+      position: 'fixed', inset: 0, background: 'var(--bg-base)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
     }}>
       <div style={{
-        background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10,
-        width: 480, maxWidth: '95vw', padding: 24, boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+        background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 10,
+        width: 480, maxWidth: '95vw', padding: 24, boxShadow: '0 8px 40px var(--bg-base)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
           <div>
@@ -58,7 +58,7 @@ const JournalModal: React.FC<Props> = ({ order, onSave, onSkip }) => {
               </span>
             </div>
           </div>
-          <button onClick={onSkip} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>
+          <button onClick={onSkip} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>
         </div>
 
         <div style={{ marginBottom: 14 }}>
@@ -86,7 +86,7 @@ const JournalModal: React.FC<Props> = ({ order, onSave, onSkip }) => {
                 style={{
                   padding: '5px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 13, fontWeight: 600,
                   border: `2px solid ${emotion === em ? EMOTION_COLORS[em] : 'var(--border)'}`,
-                  background: emotion === em ? `${EMOTION_COLORS[em]}22` : 'transparent',
+                  background: emotion === em ? (em === 'fearful' ? 'var(--danger-dim)' : 'var(--accent-dim)') : 'var(--bg-card)',
                   color: emotion === em ? EMOTION_COLORS[em] : 'var(--text-muted)',
                   transition: 'all 0.15s',
                 }}
@@ -129,8 +129,8 @@ const JournalModal: React.FC<Props> = ({ order, onSave, onSkip }) => {
           <button
             onClick={() => onSave({ reason, emotion, market_condition, notes })}
             style={{
-              flex: 1, padding: '10px 0', background: 'var(--accent)', color: '#000',
-              border: 'none', borderRadius: 6, fontWeight: 700, cursor: 'pointer', fontSize: 14,
+              flex: 1, padding: '10px 0', background: 'var(--accent)', color: 'var(--bg-base)',
+              border: '1px solid var(--border)', borderRadius: 6, fontWeight: 700, cursor: 'pointer', fontSize: 14,
             }}
           >
             Save to Journal
@@ -138,7 +138,7 @@ const JournalModal: React.FC<Props> = ({ order, onSave, onSkip }) => {
           <button
             onClick={onSkip}
             style={{
-              padding: '10px 18px', background: 'transparent', color: 'var(--text-muted)',
+              padding: '10px 18px', background: 'var(--bg-card)', color: 'var(--text-muted)',
               border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', fontSize: 14,
             }}
           >

@@ -43,7 +43,7 @@ const WalletBar: React.FC<Props> = ({ sessionId, onDeposit }) => {
   const pnlColor = wallet.pnlTotal >= 0 ? 'var(--accent)' : 'var(--danger)';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-secondary)', padding: '4px 14px', borderBottom: '1px solid var(--border)', fontSize: 12, flexShrink: 0, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-panel)', padding: '4px 14px', borderBottom: '1px solid var(--border)', fontSize: 12, flexShrink: 0, flexWrap: 'wrap' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 14 }}>👤</span>
         {editing ? (
@@ -56,13 +56,13 @@ const WalletBar: React.FC<Props> = ({ sessionId, onDeposit }) => {
               style={{ background: 'var(--bg-hover)', border: '1px solid var(--accent)', borderRadius: 4, color: 'var(--text-primary)', padding: '2px 6px', fontSize: 11, width: 110 }}
               autoFocus
             />
-            <button onClick={saveUsername} style={{ background: 'var(--accent)', border: 'none', borderRadius: 4, color: '#000', padding: '2px 8px', cursor: 'pointer', fontSize: 10, fontWeight: 700 }}>✓</button>
-            <button onClick={() => setEditing(false)} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text-muted)', padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>✕</button>
+            <button onClick={saveUsername} style={{ background: 'var(--accent)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--bg-base)', padding: '2px 8px', cursor: 'pointer', fontSize: 10, fontWeight: 700 }}>✓</button>
+            <button onClick={() => setEditing(false)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text-muted)', padding: '2px 6px', cursor: 'pointer', fontSize: 10 }}>✕</button>
           </div>
         ) : (
           <span
             onClick={() => setEditing(true)}
-            style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', borderBottom: '1px dashed rgba(46,204,152,0.4)' }}
+            style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer', borderBottom: '1px dashed var(--accent)' }}
             title="Click to edit username"
           >
             {wallet.username}
@@ -98,11 +98,11 @@ const WalletBar: React.FC<Props> = ({ sessionId, onDeposit }) => {
         <button
           onClick={onDeposit}
           style={{
-            background: 'linear-gradient(135deg, var(--accent), #22a878)',
-            color: '#000', border: 'none', borderRadius: 6,
+            background: 'var(--accent)',
+            color: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 6,
             padding: '4px 14px', cursor: 'pointer', fontSize: 11,
             fontWeight: 700, letterSpacing: '0.02em',
-            boxShadow: '0 2px 8px rgba(46,204,152,0.3)',
+            boxShadow: '0 2px 8px var(--accent-dim)',
           }}
         >
           + Fund Account

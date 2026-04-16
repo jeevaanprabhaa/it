@@ -3,11 +3,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { JournalEntry, Analytics, Emotion } from '../types';
 
 const EMOTION_COLORS: Record<string, string> = {
-  confident: '#2ECC98',
-  fearful: '#E5534B',
-  fomo: '#ff9800',
-  neutral: '#78909c',
-  greedy: '#ab47bc',
+  confident: 'var(--accent)',
+  fearful: 'var(--danger)',
+  fomo: 'var(--accent)',
+  neutral: 'var(--text-muted)',
+  greedy: 'var(--text-muted)',
 };
 
 const EMOTION_LABELS: Record<string, string> = {
@@ -19,9 +19,9 @@ const EMOTION_LABELS: Record<string, string> = {
 };
 
 const MC_COLORS: Record<string, string> = {
-  trending: '#2ECC98',
-  ranging: '#ffb74d',
-  volatile: '#E5534B',
+  trending: 'var(--accent)',
+  ranging: 'var(--accent)',
+  volatile: 'var(--danger)',
 };
 
 type SubPage = 'timeline' | 'psychology';
@@ -82,9 +82,9 @@ const JournalTab: React.FC = () => {
     <button
       onClick={() => setSubPage(t)}
       style={{
-        padding: '5px 16px', border: 'none', cursor: 'pointer', fontSize: 12, background: 'transparent',
+        padding: '5px 16px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 12, background: 'var(--bg-card)',
         color: subPage === t ? 'var(--accent)' : 'var(--text-muted)',
-        borderBottom: subPage === t ? '2px solid var(--accent)' : '2px solid transparent',
+        borderBottom: subPage === t ? '2px solid var(--accent)' : '2px solid var(--border)',
       }}
     >
       {label}
@@ -116,7 +116,7 @@ const JournalTab: React.FC = () => {
                   const isWin = pnl !== null && pnl > 0;
                   return (
                     <div key={entry.id} style={{
-                      background: 'var(--bg-secondary)', border: `1px solid ${pnl !== null ? (isWin ? 'rgba(46,204,152,0.2)' : 'rgba(229,83,75,0.2)') : 'var(--border)'}`,
+                      background: 'var(--bg-panel)', border: `1px solid ${pnl !== null ? (isWin ? 'var(--accent)' : 'var(--danger)') : 'var(--border)'}`,
                       borderLeft: `3px solid ${pnl !== null ? (isWin ? 'var(--accent)' : 'var(--danger)') : 'var(--border)'}`,
                       borderRadius: 6, padding: '10px 14px',
                     }}>
@@ -222,7 +222,7 @@ const JournalTab: React.FC = () => {
                         <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                         <Tooltip
                           formatter={(v: number) => [`${v}%`, 'Win Rate']}
-                          contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}
+                          contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}
                           labelStyle={{ color: 'var(--text-primary)' }}
                         />
                         <Bar dataKey="win_rate" radius={[4, 4, 0, 0]}>
@@ -247,12 +247,12 @@ const JournalTab: React.FC = () => {
                         <YAxis tickFormatter={v => `$${v}`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                         <Tooltip
                           formatter={(v: number) => [`$${v.toFixed(2)}`, 'Avg PnL']}
-                          contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}
+                          contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}
                           labelStyle={{ color: 'var(--text-primary)' }}
                         />
                         <Bar dataKey="avg_pnl" radius={[4, 4, 0, 0]}>
                           {avgPnlChartData.map((entry, i) => (
-                            <Cell key={i} fill={entry.avg_pnl >= 0 ? '#2ECC98' : '#E5534B'} />
+                            <Cell key={i} fill={entry.avg_pnl >= 0 ? 'var(--accent)' : 'var(--danger)'} />
                           ))}
                         </Bar>
                       </BarChart>
@@ -267,7 +267,7 @@ const JournalTab: React.FC = () => {
                     <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600, marginBottom: 10 }}>Top Reason Keywords by Avg PnL</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {analytics.most_profitable_reason_keywords.map((k, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 12px', background: 'var(--bg-secondary)', borderRadius: 6, border: '1px solid var(--border)' }}>
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 12px', background: 'var(--bg-panel)', borderRadius: 6, border: '1px solid var(--border)' }}>
                           <span style={{ color: 'var(--accent)', fontWeight: 600 }}>"{k.word}"</span>
                           <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
                             <span style={{ color: 'var(--text-muted)' }}>{k.count} trade{k.count !== 1 ? 's' : ''}</span>

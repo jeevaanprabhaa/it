@@ -63,25 +63,33 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    const styles = getComputedStyle(document.documentElement);
+    const theme = {
+      bgBase: styles.getPropertyValue('--bg-base').trim(),
+      accent: styles.getPropertyValue('--accent').trim(),
+      danger: styles.getPropertyValue('--danger').trim(),
+      textMuted: styles.getPropertyValue('--text-muted').trim(),
+      border: styles.getPropertyValue('--border').trim(),
+    };
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
-      layout: { background: { color: '#0D0F14' }, textColor: '#7B8099' },
-      grid: { vertLines: { color: '#1E2235' }, horzLines: { color: '#1E2235' } },
+      layout: { background: { color: theme.bgBase }, textColor: theme.textMuted },
+      grid: { vertLines: { color: theme.border }, horzLines: { color: theme.border } },
       crosshair: { mode: 1 },
-      timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#1E2235' },
-      rightPriceScale: { borderColor: '#1E2235' },
+      timeScale: { timeVisible: true, secondsVisible: false, borderColor: theme.border },
+      rightPriceScale: { borderColor: theme.border },
     });
     chartRef.current = chart;
     candleRef.current = chart.addCandlestickSeries({
-      upColor: '#2ECC98', downColor: '#E5534B',
-      borderUpColor: '#2ECC98', borderDownColor: '#E5534B',
-      wickUpColor: '#2ECC98', wickDownColor: '#E5534B',
+      upColor: theme.accent, downColor: theme.danger,
+      borderUpColor: theme.accent, borderDownColor: theme.danger,
+      wickUpColor: theme.accent, wickDownColor: theme.danger,
     });
-    smaRef.current = chart.addLineSeries({ color: '#2ECC98', lineWidth: 1, title: 'SMA20' });
-    upperRef.current = chart.addLineSeries({ color: '#FF9800', lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
-    lowerRef.current = chart.addLineSeries({ color: '#FF9800', lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
-    vwapRef.current = chart.addLineSeries({ color: '#ce93d8', lineWidth: 2, title: 'VWAP' });
+    smaRef.current = chart.addLineSeries({ color: theme.accent, lineWidth: 1, title: 'SMA20' });
+    upperRef.current = chart.addLineSeries({ color: theme.accent, lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
+    lowerRef.current = chart.addLineSeries({ color: theme.accent, lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
+    vwapRef.current = chart.addLineSeries({ color: theme.textMuted, lineWidth: 2, title: 'VWAP' });
 
     const observer = new ResizeObserver(() => {
       if (containerRef.current && chartRef.current) {
@@ -144,9 +152,9 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
   const checkboxStyle = (color: string, checked: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
     padding: '2px 8px', borderRadius: 4,
-    background: checked ? `${color}18` : 'transparent',
-    border: `1px solid ${checked ? color : '#1E2235'}`,
-    color: checked ? color : '#7B8099',
+    background: checked ? 'var(--accent-dim)' : 'var(--bg-card)',
+    border: `1px solid ${checked ? color : 'var(--border)'}`,
+    color: checked ? color : 'var(--text-muted)',
     fontSize: 11, fontWeight: 600, userSelect: 'none',
     transition: 'all 0.15s',
   });
@@ -165,13 +173,13 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
         position: 'absolute', top: 8, left: 8, zIndex: 10,
         display: 'flex', gap: 6, alignItems: 'center',
       }}>
-        <div style={checkboxStyle('#2ECC98', showSma)} onClick={() => setShowSma(v => !v)}>
+        <div style={checkboxStyle('var(--accent)', showSma)} onClick={() => setShowSma(v => !v)}>
           <span>SMA20</span>
         </div>
-        <div style={checkboxStyle('#FF9800', showBB)} onClick={() => setShowBB(v => !v)}>
+        <div style={checkboxStyle('var(--accent)', showBB)} onClick={() => setShowBB(v => !v)}>
           <span>BB</span>
         </div>
-        <div style={checkboxStyle('#ce93d8', showVwap)} onClick={() => setShowVwap(v => !v)}>
+        <div style={checkboxStyle('var(--text-muted)', showVwap)} onClick={() => setShowVwap(v => !v)}>
           <span>VWAP{showVwap && currentVwap ? ` ${currentVwap}` : ''}</span>
         </div>
       </div>

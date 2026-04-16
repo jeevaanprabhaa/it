@@ -31,9 +31,9 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
   const medals = ['🥇', '🥈', '🥉'];
 
   return (
-    <div style={{ height: '100%', overflow: 'auto', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div style={{ height: '100%', overflow: 'auto', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={onBack} style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>← Back</button>
+        <button onClick={onBack} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>← Back</button>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>🏆 Leaderboard</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Top paper traders ranked by total P&L</div>
@@ -58,8 +58,8 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
                 <div
                   key={i}
                   style={{
-                    background: isMe ? 'rgba(46,204,152,0.05)' : 'var(--bg-secondary)',
-                    border: `1px solid ${isMe ? 'rgba(46,204,152,0.25)' : 'var(--border)'}`,
+                    background: isMe ? 'var(--accent-dim)' : 'var(--bg-panel)',
+                    border: `1px solid ${isMe ? 'var(--accent)' : 'var(--border)'}`,
                     borderRadius: 12, padding: '14px 18px',
                     display: 'flex', alignItems: 'center', gap: 14,
                   }}
@@ -70,7 +70,7 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, fontSize: 14, color: isMe ? 'var(--accent)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {entry.username}
-                      {isMe && <span style={{ fontSize: 10, background: 'rgba(46,204,152,0.1)', border: '1px solid rgba(46,204,152,0.25)', borderRadius: 8, padding: '1px 6px', color: 'var(--accent)' }}>You</span>}
+                      {isMe && <span style={{ fontSize: 10, background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 8, padding: '1px 6px', color: 'var(--accent)' }}>You</span>}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                       {entry.tradesCount} trades · {entry.winRate}% win rate
@@ -88,7 +88,7 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
               );
             })}
           </div>
-          <div style={{ marginTop: 20, padding: '12px 16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
+          <div style={{ marginTop: 20, padding: '12px 16px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
             Leaderboard updates every 30 seconds · Paper trading only
           </div>
         </div>

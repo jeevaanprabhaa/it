@@ -70,7 +70,7 @@ const SecuritiesTable: React.FC<Props> = ({ selectedSymbol, onSelectSymbol }) =>
                 onClick={() => onSelectSymbol(row.symbol)}
                 style={{
                   cursor: 'pointer',
-                  background: isSelected ? 'var(--bg-hover)' : 'transparent',
+                  background: isSelected ? 'var(--bg-hover)' : 'var(--bg-panel)',
                   borderBottom: '1px solid var(--border)',
                 }}
               >

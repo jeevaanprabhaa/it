@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#2ECC98" />
+    <meta name="theme-color" content="#0E1117" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -15,23 +15,37 @@
     <title>AlgoTrader</title>
     <style>
       :root {
-        --bg-primary:   #0D0F14;
-        --bg-secondary: #13161E;
-        --bg-hover:     #1C2030;
-        --accent:       #2ECC98;
-        --danger:       #E5534B;
-        --text-primary: #E8EAF0;
-        --text-muted:   #7B8099;
-        --border:       #1E2235;
+        --bg-base: #0E1117;
+        --bg-panel: #161B27;
+        --bg-card: #1C2236;
+        --bg-hover: #232A3E;
+        --accent: #00C896;
+        --accent-dim: rgba(0,200,150,0.12);
+        --danger: #E5534B;
+        --danger-dim: rgba(229,83,75,0.12);
+        --text-primary: #E8EAF2;
+        --text-muted: #6B7599;
+        --border: #232A3E;
+        --border-strong: #2E3650;
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
-        background: var(--bg-primary);
+        background: var(--bg-base);
         color: var(--text-primary);
         font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent;
         -webkit-font-smoothing: antialiased;
+      }
+      input, select, textarea, button {
+        font-family: inherit;
+      }
+      input::placeholder, textarea::placeholder {
+        color: var(--text-muted);
+      }
+      ::selection {
+        background: var(--accent-dim);
+        color: var(--text-primary);
       }
     </style>
   </head>

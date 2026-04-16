@@ -87,16 +87,16 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex',
+      position: 'fixed', inset: 0, background: 'var(--bg-base)', display: 'flex',
       alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16,
     }}>
       <div style={{
-        background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 16,
+        background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 16,
         width: '100%', maxWidth: 440, padding: 32, position: 'relative',
       }}>
         <button
           onClick={onClose}
-          style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: 20, cursor: 'pointer' }}
+          style={{ position: 'absolute', top: 16, right: 16, background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-muted)', fontSize: 20, cursor: 'pointer' }}
         >✕</button>
 
         {step === 'amount' && (
@@ -117,7 +117,7 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
                     style={{
                       padding: '8px 16px', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600,
                       background: amountUsd === p ? 'var(--accent)' : 'var(--bg-hover)',
-                      color: amountUsd === p ? '#000' : 'var(--text-muted)',
+                      color: amountUsd === p ? 'var(--bg-base)' : 'var(--text-muted)',
                       border: amountUsd === p ? '1px solid var(--accent)' : '1px solid var(--border)',
                     }}
                   >
@@ -139,7 +139,7 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
               </div>
             </div>
 
-            <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 24 }}>
+            <div style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
                 <span style={{ color: 'var(--text-muted)' }}>You pay:</span>
                 <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>${amountUsd.toFixed(2)}</span>
@@ -153,14 +153,14 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
               </div>
             </div>
 
-            {error && <div style={{ background: 'rgba(229,83,75,0.08)', border: '1px solid var(--danger)', borderRadius: 8, padding: 10, color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{error}</div>}
+            {error && <div style={{ background: 'var(--danger-dim)', border: '1px solid var(--danger)', borderRadius: 8, padding: 10, color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{error}</div>}
 
             <button
               onClick={handleCreateIntent}
               disabled={loading}
               style={{
-                width: '100%', padding: '14px', borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-                background: 'linear-gradient(135deg, var(--accent), #22a878)', color: '#000',
+                width: '100%', padding: '14px', borderRadius: 10, border: '1px solid var(--border)', cursor: loading ? 'not-allowed' : 'pointer',
+                background: 'var(--accent)', color: 'var(--bg-base)',
                 fontWeight: 800, fontSize: 15, opacity: loading ? 0.7 : 1,
               }}
             >
@@ -210,21 +210,21 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
               </div>
             </div>
 
-            <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, padding: 12, marginBottom: 20, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+            <div style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 10, padding: 12, marginBottom: 20, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span style={{ color: 'var(--text-muted)' }}>Charging:</span>
               <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>${amountUsd.toFixed(2)} → ${(amountUsd * creditMultiplier).toLocaleString()} virtual</span>
             </div>
 
-            {error && <div style={{ background: 'rgba(229,83,75,0.08)', border: '1px solid var(--danger)', borderRadius: 8, padding: 10, color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{error}</div>}
+            {error && <div style={{ background: 'var(--danger-dim)', border: '1px solid var(--danger)', borderRadius: 8, padding: 10, color: 'var(--danger)', fontSize: 12, marginBottom: 16 }}>{error}</div>}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setStep('amount')} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}>← Back</button>
+              <button onClick={() => setStep('amount')} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}>← Back</button>
               <button
                 onClick={handlePay}
                 disabled={loading}
                 style={{
-                  flex: 2, padding: 12, borderRadius: 10, border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-                  background: 'linear-gradient(135deg, var(--accent), #22a878)', color: '#000',
+                  flex: 2, padding: 12, borderRadius: 10, border: '1px solid var(--border)', cursor: loading ? 'not-allowed' : 'pointer',
+                  background: 'var(--accent)', color: 'var(--bg-base)',
                   fontWeight: 800, fontSize: 14, opacity: loading ? 0.7 : 1,
                 }}
               >
@@ -244,7 +244,7 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
             <div style={{ fontSize: 18, color: 'var(--text-primary)', fontWeight: 700, marginBottom: 8 }}>Processing Payment</div>
             <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Please wait…</div>
             <div style={{ marginTop: 24, background: 'var(--bg-hover)', borderRadius: 8, height: 4, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'linear-gradient(90deg, var(--accent), #22a878)', animation: 'progress 2s ease-in-out', width: '100%' }} />
+              <div style={{ height: '100%', background: 'var(--accent)', animation: 'progress 2s ease-in-out', width: '100%' }} />
             </div>
             <style>{`@keyframes progress { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); } }`}</style>
           </div>
@@ -257,7 +257,7 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
               +${virtualCredits.toLocaleString()} Virtual Credits!
             </div>
             <div style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20 }}>Your account has been funded. Happy trading!</div>
-            <div style={{ background: 'var(--bg-primary)', border: '1px solid rgba(46,204,152,0.2)', borderRadius: 10, padding: 14, fontSize: 13, color: 'var(--text-primary)' }}>
+            <div style={{ background: 'var(--bg-base)', border: '1px solid var(--accent)', borderRadius: 10, padding: 14, fontSize: 13, color: 'var(--text-primary)' }}>
               Real payment: <strong style={{ color: 'var(--text-primary)' }}>${amountUsd}</strong><br />
               Credits added: <strong style={{ color: 'var(--accent)' }}>${virtualCredits.toLocaleString()}</strong>
             </div>
