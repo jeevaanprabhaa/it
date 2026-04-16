@@ -7,10 +7,25 @@ const Stripe = require('stripe');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const CC_STREAM_API_KEY = process.env.CRYPTOCOMPARE_API_KEY || '';
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY || '');
+const stripe = process.env.STRIPE_SECRET_KEY ? Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
-app.use(cors());
+const allowedOriginPatterns = [
+  /^https?:\/\/localhost(:\d+)?$/,
+  /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
+  /^https:\/\/.*\.replit\.dev$/,
+  /^https:\/\/.*\.replit\.app$/,
+];
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOriginPatterns.some(pattern => pattern.test(origin))) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+}));
 app.use(express.json());
 
 // ─── CryptoCompare (real market data, works from Replit) ─────────────────────
@@ -354,7 +369,7 @@ app.post('/api/wallet/deposit', async (req, res) => {
   if (!amount || amount < 100 || amount > 100000) {
     return res.status(400).json({ error: 'Amount must be between $1 and $1,000' });
   }
-  if (!process.env.STRIPE_SECRET_KEY) {
+  if (!stripe) {
     return res.status(503).json({ error: 'Payment not configured' });
   }
 
@@ -572,7 +587,10 @@ const ccPrices = {};
 
 function connectCCStream() {
   try {
-    ccWs = new WebSocket('wss://streamer.cryptocompare.com/v2?api_key=Qj3sh0xFh9rnaq0KySXHFIDigital');
+    const streamUrl = CC_STREAM_API_KEY
+      ? `wss://streamer.cryptocompare.com/v2?api_key=${encodeURIComponent(CC_STREAM_API_KEY)}`
+      : 'wss://streamer.cryptocompare.com/v2';
+    ccWs = new WebSocket(streamUrl);
     ccWs.on('open', () => {
       if (ccSubscriptions.size > 0) {
         ccWs.send(JSON.stringify({ action: 'SubAdd', subs: Array.from(ccSubscriptions) }));

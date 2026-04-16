@@ -74,9 +74,13 @@ run.sh                   - Startup script
 bash run.sh
 ```
 Starts: Express backend (port 3001) + Vite dev server (port 5000)
+- Replit workflow: `Start application` runs `bash run.sh` and waits on port 5000.
+- Shared Node dependencies are installed at the project root so the imported `client/` and `server/` folders can resolve packages without restructuring the original code.
 
 ## Notes
 - Stripe keys stored in Replit Secrets: STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY
+- If STRIPE_SECRET_KEY is absent, the backend starts normally and payment endpoints return "Payment not configured".
+- CryptoCompare streaming can use CRYPTOCOMPARE_API_KEY from Replit Secrets; REST market data works without a key.
 - Note: Stripe integration was set up manually using keys (not via Replit Stripe connector)
 - CryptoCompare API is free-tier (no API key needed for basic endpoints)
 - Session IDs stored in localStorage — wallet resets if localStorage is cleared
