@@ -148,7 +148,7 @@ const App: React.FC = () => {
   if (page === 'coach') {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-        <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
+        <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} activeSection="dashboard" onNavigateTrade={() => setPage('terminal')} onNavigateDashboard={() => setPage('leaderboard')} />
         <div style={{ flex: 1, minHeight: 0 }}>
           <AICoachPage sessionId={sessionId} onBack={() => setPage('terminal')} />
         </div>
@@ -159,7 +159,7 @@ const App: React.FC = () => {
   if (page === 'leaderboard') {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-        <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
+        <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} activeSection="dashboard" onNavigateTrade={() => setPage('terminal')} onNavigateDashboard={() => setPage('leaderboard')} />
         <div style={{ flex: 1, minHeight: 0 }}>
           <LeaderboardPage sessionId={sessionId} onBack={() => setPage('terminal')} />
         </div>
@@ -172,9 +172,8 @@ const App: React.FC = () => {
   if (isMobile) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)', position: 'relative' }}>
-        <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
+        <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} activeSection="trade" onNavigateTrade={() => setPage('terminal')} onNavigateDashboard={() => setPage('leaderboard')} />
         <div style={{ display: 'flex', alignItems: 'center', padding: '6px 10px', background: 'var(--bg-base)', borderBottom: '1px solid var(--border)', gap: 8, flexShrink: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, color: 'var(--accent)' }}>AlgoTrader</div>
           {isDemo && <span style={{ padding: '1px 6px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 10, fontSize: 10, color: 'var(--accent)' }}>DEMO</span>}
           <select value={symbol} onChange={e => setSymbol(e.target.value)} style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 6px', fontSize: 12, flex: 1 }}>
             {SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -262,32 +261,16 @@ const App: React.FC = () => {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-      <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} />
+      <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} activeSection="trade" onNavigateTrade={() => setPage('terminal')} onNavigateDashboard={() => setPage('leaderboard')} />
 
       <div style={{ display: 'flex', alignItems: 'center', padding: '5px 12px', background: 'var(--bg-panel)', borderBottom: '1px solid var(--border)', gap: 10, flexShrink: 0 }}>
-        <div style={{ fontWeight: 800, fontSize: 16, color: 'var(--accent)', marginRight: 4 }}>
-          AlgoTrader
-        </div>
-
-        {[
-          { id: 'heatmap', icon: '🗺', label: 'Heatmap', page: 'heatmap' as Page },
-          { id: 'coach',   icon: '🤖', label: 'AI Coach', page: 'coach' as Page },
-          { id: 'lb',      icon: '🏆', label: 'Leaderboard', page: 'leaderboard' as Page },
-        ].map(btn => (
-          <button
-            key={btn.id}
-            onClick={() => setPage(btn.page)}
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '3px 10px', cursor: 'pointer', fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
-          >
-            {btn.icon} {btn.label}
-          </button>
-        ))}
-
         {isDemo && <span style={{ padding: '2px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 12, fontSize: 10, color: 'var(--accent)' }}>DEMO</span>}
 
         <select value={symbol} onChange={e => setSymbol(e.target.value)} style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 13 }}>
           {SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+
+        <button onClick={() => setPage('heatmap')} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '3px 10px', cursor: 'pointer', fontSize: 12 }}>Market Heatmap</button>
 
         <div style={{ display: 'flex', gap: 2 }}>
           {INTERVALS.map(iv => (
