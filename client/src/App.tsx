@@ -34,7 +34,7 @@ const App: React.FC = () => {
   const [page, setPage] = useState<Page>('terminal');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
-  const [bottomTab, setBottomTab] = useState<'securities' | 'orders' | 'trades' | 'buysell' | 'journal'>('securities');
+  const [bottomTab, setBottomTab] = useState<'securities' | 'orders' | 'trades' | 'journal'>('securities');
   const [mobileTab, setMobileTab] = useState<MobileTab>('charts');
   const [showMobileBuySell, setShowMobileBuySell] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
@@ -252,10 +252,9 @@ const App: React.FC = () => {
   }
 
   // ── Desktop Layout ───────────────────────────────────────────────────────────
-  const desktopBottomTabs = ['securities', 'buysell', 'orders', 'trades', 'journal'] as const;
+  const desktopBottomTabs = ['securities', 'orders', 'trades', 'journal'] as const;
   const chartIntervals = ['1m', '5m', '1h', '4h', '1d'];
   const tabLabel = (t: typeof desktopBottomTabs[number]) => {
-    if (t === 'buysell') return 'Buy/Sell';
     if (t === 'journal') return '📓 Journal';
     return t.charAt(0).toUpperCase() + t.slice(1);
   };
@@ -290,6 +289,9 @@ const App: React.FC = () => {
       </div>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
+        <div style={{ width: 300, flexShrink: 0 }}>
+          <OrderPanel symbol={symbol} lastPrice={ticker?.lastPrice} orders={orders} onPlaceOrder={handlePlaceOrder} onCancelOrder={handleCancelOrder} />
+        </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#0E1117' }}>
             <div style={{ height: 40, background: '#161B27', borderBottom: '1px solid #232A3E', display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', flexShrink: 0 }}>
@@ -337,7 +339,6 @@ const App: React.FC = () => {
               {bottomTab === 'securities' && <SecuritiesTable selectedSymbol={symbol} onSelectSymbol={setSymbol} />}
               {bottomTab === 'trades' && <TradesPanel trades={trades} />}
               {bottomTab === 'orders' && <DesktopOrdersTable orders={orders} onCancel={handleCancelOrder} />}
-              {bottomTab === 'buysell' && <OrderPanel symbol={symbol} lastPrice={ticker?.lastPrice} orders={orders} onPlaceOrder={handlePlaceOrder} onCancelOrder={handleCancelOrder} />}
               {bottomTab === 'journal' && <JournalTab key={journalKey} />}
             </div>
           </div>

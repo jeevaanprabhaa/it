@@ -12,18 +12,17 @@ interface Props {
 const ORDER_TYPES: { type: OrderType; label: string; desc: string }[] = [
   { type: 'market', label: 'Market', desc: 'Fills immediately at current price' },
   { type: 'limit', label: 'Limit', desc: 'Fills when price reaches target' },
-  { type: 'stop', label: 'Stop-Loss', desc: 'Sells when price falls below stop' },
+  { type: 'stop', label: 'Stop', desc: 'Sells when price falls below stop' },
 ];
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '6px 8px',
-  background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 4,
-  color: 'var(--text-primary)', fontSize: 12, outline: 'none',
-};
-
 const labelStyle: React.CSSProperties = {
-  color: 'var(--text-muted)', display: 'block', marginBottom: 3, fontSize: 11, fontWeight: 600,
-  textTransform: 'uppercase', letterSpacing: '0.04em',
+  color: '#6B7599',
+  display: 'block',
+  marginBottom: 7,
+  fontSize: 10,
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.07em',
 };
 
 const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, onCancelOrder }) => {
@@ -32,8 +31,67 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
   const [price, setPrice] = useState('');
   const [triggerPrice, setTriggerPrice] = useState('');
   const [qty, setQty] = useState('');
+  const [percent, setPercent] = useState(0);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  const baseAsset = symbol.replace('USDT', '');
+  const quoteAsset = symbol.endsWith('USDT') ? 'USDT' : symbol.slice(-3);
   const marketPrice = lastPrice ? parseFloat(lastPrice) : 0;
+  const pendingOrders = orders.filter(o => o.status === 'PENDING' || o.status === 'OPEN');
+  const effectiveSide = orderType === 'stop' ? 'SELL' : side;
+  const submitColor = effectiveSide === 'BUY' && orderType !== 'stop' ? '#00C896' : '#E5534B';
+
+  const inputShellStyle = (field: string): React.CSSProperties => ({
+    width: '100%',
+    minHeight: 42,
+    background: '#0E1117',
+    border: `1px solid ${focusedField === field ? '#00C896' : '#2E3650'}`,
+    borderRadius: 8,
+    color: '#E8EAF2',
+    fontSize: 13,
+    padding: '0 8px 0 12px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontVariantNumeric: 'tabular-nums',
+  });
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    minWidth: 0,
+    background: 'transparent',
+    border: 0,
+    outline: 'none',
+    color: '#E8EAF2',
+    fontSize: 13,
+    fontVariantNumeric: 'tabular-nums',
+  };
+
+  const badgeStyle: React.CSSProperties = {
+    background: '#1C2236',
+    color: '#E8EAF2',
+    fontSize: 12,
+    borderRadius: 6,
+    padding: '3px 8px',
+    flexShrink: 0,
+    fontWeight: 700,
+  };
+
+  const inputField = (field: string, value: string, onChange: (value: string) => void, placeholder: string, badge: string) => (
+    <div style={inputShellStyle(field)}>
+      <input
+        type="number"
+        step="any"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocusedField(field)}
+        onBlur={() => setFocusedField(null)}
+        placeholder={placeholder}
+        style={inputStyle}
+      />
+      <span style={badgeStyle}>{badge}</span>
+    </div>
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,182 +127,205 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
     setPrice('');
     setTriggerPrice('');
     setQty('');
+    setPercent(0);
   };
 
-  const pendingOrders = orders.filter(o => o.status === 'PENDING' || o.status === 'OPEN');
-  const effectiveSide = orderType === 'stop' ? 'SELL' : side;
-
   return (
-    <div style={{ padding: '10px 12px', fontSize: 13, overflowY: 'auto', height: '100%' }}>
-      <div style={{ display: 'flex', gap: 3, marginBottom: 10 }}>
-        {ORDER_TYPES.map(ot => (
-          <button
-            key={ot.type}
-            onClick={() => setOrderType(ot.type)}
-            title={ot.desc}
-            style={{
-              flex: 1, padding: '4px 0', fontSize: 11, fontWeight: 600,
-              border: `1px solid ${orderType === ot.type ? 'var(--accent)' : 'var(--border)'}`,
-              borderRadius: 4, cursor: 'pointer',
-              background: orderType === ot.type ? 'var(--accent-dim)' : 'var(--bg-card)',
-              color: orderType === ot.type ? 'var(--accent)' : 'var(--text-muted)',
-            }}
-          >
-            {ot.label}
-          </button>
-        ))}
+    <div style={{ padding: 18, fontSize: 13, overflowY: 'auto', height: '100%', background: '#161B27', borderRight: '1px solid #232A3E', color: '#E8EAF2' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+        <button
+          onClick={() => setSide('BUY')}
+          disabled={orderType === 'stop'}
+          style={{
+            flex: 1,
+            padding: '10px 0',
+            background: side === 'BUY' && orderType !== 'stop' ? '#00C896' : '#1C2236',
+            color: side === 'BUY' && orderType !== 'stop' ? '#0E1117' : '#6B7599',
+            border: side === 'BUY' && orderType !== 'stop' ? '1px solid #00C896' : '1px solid #232A3E',
+            borderRadius: 8,
+            cursor: orderType === 'stop' ? 'not-allowed' : 'pointer',
+            fontWeight: side === 'BUY' && orderType !== 'stop' ? 700 : 600,
+            fontSize: 13,
+          }}
+        >
+          BUY
+        </button>
+        <button
+          onClick={() => setSide('SELL')}
+          disabled={orderType === 'stop'}
+          style={{
+            flex: 1,
+            padding: '10px 0',
+            background: side === 'SELL' || orderType === 'stop' ? '#E5534B' : '#1C2236',
+            color: side === 'SELL' || orderType === 'stop' ? '#fff' : '#6B7599',
+            border: side === 'SELL' || orderType === 'stop' ? '1px solid #E5534B' : '1px solid #232A3E',
+            borderRadius: 8,
+            cursor: orderType === 'stop' ? 'not-allowed' : 'pointer',
+            fontWeight: side === 'SELL' || orderType === 'stop' ? 700 : 600,
+            fontSize: 13,
+          }}
+        >
+          SELL
+        </button>
       </div>
 
-      {orderType !== 'stop' && (
-        <div style={{ display: 'flex', marginBottom: 10, borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <button
-            onClick={() => setSide('BUY')}
-            style={{ flex: 1, padding: '5px 0', background: side === 'BUY' ? 'var(--accent)' : 'var(--bg-card)', color: side === 'BUY' ? 'var(--bg-base)' : 'var(--text-muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
-          >
-            BUY
-          </button>
-          <button
-            onClick={() => setSide('SELL')}
-            style={{ flex: 1, padding: '5px 0', background: side === 'SELL' ? 'var(--danger)' : 'var(--bg-card)', color: side === 'SELL' ? 'var(--text-primary)' : 'var(--text-muted)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: 12 }}
-          >
-            SELL
-          </button>
+      <div style={{ marginBottom: 16 }}>
+        <label style={labelStyle}>Limit</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7 }}>
+          {ORDER_TYPES.map(ot => (
+            <button
+              key={ot.type}
+              onClick={() => setOrderType(ot.type)}
+              title={ot.desc}
+              style={{
+                padding: '8px 0',
+                fontSize: 12,
+                fontWeight: 700,
+                border: `1px solid ${orderType === ot.type ? '#00C896' : '#232A3E'}`,
+                borderRadius: 8,
+                cursor: 'pointer',
+                background: orderType === ot.type ? 'rgba(0,200,150,0.12)' : '#1C2236',
+                color: orderType === ot.type ? '#00C896' : '#6B7599',
+              }}
+            >
+              {ot.label}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {orderType === 'stop' && (
-        <div style={{ padding: '4px 8px', marginBottom: 8, background: 'var(--danger-dim)', border: '1px solid var(--danger)', borderRadius: 4, fontSize: 11, color: 'var(--danger)' }}>
+        <div style={{ padding: '9px 11px', marginBottom: 15, background: 'rgba(229,83,75,0.12)', border: '1px solid #E5534B', borderRadius: 8, fontSize: 12, color: '#E5534B', lineHeight: 1.4 }}>
           Stop-Loss automatically sells when price falls to the stop level.
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
         {orderType === 'market' && (
-          <div style={{ marginBottom: 8 }}>
-            <label style={labelStyle}>Price (Market)</label>
-            <div style={{ ...inputStyle, color: 'var(--text-muted)', cursor: 'default', display: 'flex', alignItems: 'center' }}>
-              {marketPrice ? marketPrice.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'} <span style={{ marginLeft: 4, fontSize: 10, color: 'var(--text-muted)' }}>auto</span>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Limit</label>
+            <div style={inputShellStyle('market-price')}>
+              <span style={{ flex: 1, color: '#E8EAF2' }}>{marketPrice ? marketPrice.toLocaleString(undefined, { maximumFractionDigits: 6 }) : '—'}</span>
+              <span style={badgeStyle}>{quoteAsset}</span>
             </div>
           </div>
         )}
 
         {orderType === 'limit' && (
           <>
-            <div style={{ marginBottom: 8 }}>
-              <label style={labelStyle}>Entry Price (at order time)</label>
-              <input
-                type="number" step="any" value={price}
-                onChange={e => setPrice(e.target.value)}
-                placeholder={lastPrice || '0'}
-                style={inputStyle}
-              />
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Limit</label>
+              {inputField('entry-price', price, setPrice, lastPrice || '0', quoteAsset)}
             </div>
-            <div style={{ marginBottom: 8 }}>
-              <label style={labelStyle}>Trigger Price (execute when reached)</label>
-              <input
-                type="number" step="any" value={triggerPrice}
-                onChange={e => setTriggerPrice(e.target.value)}
-                placeholder={side === 'BUY' ? 'Below current price' : 'Above current price'}
-                style={{ ...inputStyle, borderColor: 'var(--accent)' }}
-              />
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>{side}</label>
+              {inputField('trigger-price', triggerPrice, setTriggerPrice, side === 'BUY' ? 'Below current price' : 'Above current price', quoteAsset)}
             </div>
           </>
         )}
 
         {orderType === 'stop' && (
           <>
-            <div style={{ marginBottom: 8 }}>
-              <label style={labelStyle}>Current Entry Price</label>
-              <input
-                type="number" step="any" value={price}
-                onChange={e => setPrice(e.target.value)}
-                placeholder={lastPrice || '0'}
-                style={inputStyle}
-              />
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Limit</label>
+              {inputField('current-entry', price, setPrice, lastPrice || '0', quoteAsset)}
             </div>
-            <div style={{ marginBottom: 8 }}>
-              <label style={labelStyle}>Stop Price (sell when price falls to)</label>
-              <input
-                type="number" step="any" value={triggerPrice}
-                onChange={e => setTriggerPrice(e.target.value)}
-                placeholder="Below current price"
-                style={{ ...inputStyle, borderColor: 'var(--danger)' }}
-              />
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Sell</label>
+              {inputField('stop-price', triggerPrice, setTriggerPrice, 'Below current price', quoteAsset)}
             </div>
           </>
         )}
 
-        <div style={{ marginBottom: 10 }}>
-          <label style={labelStyle}>Quantity</label>
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>{effectiveSide === 'BUY' ? 'Buy' : 'Sell'}</label>
+          {inputField('quantity', qty, setQty, '0.00', baseAsset)}
+        </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <label style={labelStyle}>Pay</label>
           <input
-            type="number" step="any" value={qty}
-            onChange={e => setQty(e.target.value)}
-            placeholder="0.00"
-            style={inputStyle}
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={percent}
+            onChange={e => setPercent(parseInt(e.target.value, 10))}
+            style={{
+              width: '100%',
+              height: 3,
+              accentColor: '#00C896',
+              cursor: 'pointer',
+              background: `linear-gradient(to right, #00C896 0%, #00C896 ${percent}%, #232A3E ${percent}%, #232A3E 100%)`,
+            }}
           />
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, color: '#6B7599', fontSize: 10, fontVariantNumeric: 'tabular-nums' }}>
+            {[0, 25, 50, 75, 100].map(mark => <span key={mark}>{mark}%</span>)}
+          </div>
         </div>
 
         {orderType !== 'market' && triggerPrice && qty && (
-          <div style={{ marginBottom: 8, padding: '5px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent-dim)', borderRadius: 4, fontSize: 11, color: 'var(--text-muted)' }}>
-            <span style={{ color: 'var(--accent)' }}>
+          <div style={{ marginBottom: 16, padding: '10px 12px', background: 'rgba(0,200,150,0.12)', border: '1px solid rgba(0,200,150,0.22)', borderRadius: 8, fontSize: 12, color: '#6B7599', lineHeight: 1.45 }}>
+            <span style={{ color: '#00C896' }}>
               {orderType === 'limit'
-                ? `Will ${side} ${qty} ${symbol.replace('USDT','')} when price ${side === 'BUY' ? '≤' : '≥'} ${parseFloat(triggerPrice).toLocaleString()}`
-                : `Will SELL ${qty} ${symbol.replace('USDT','')} when price ≤ ${parseFloat(triggerPrice).toLocaleString()}`
+                ? `Will ${side} ${qty} ${baseAsset} when price ${side === 'BUY' ? '≤' : '≥'} ${parseFloat(triggerPrice).toLocaleString()}`
+                : `Will SELL ${qty} ${baseAsset} when price ≤ ${parseFloat(triggerPrice).toLocaleString()}`
               }
             </span>
             <br />
-            <span style={{ color: 'var(--text-muted)' }}>Checked every 30s by the server</span>
+            <span>Checked every 30s by the server</span>
           </div>
         )}
 
         <button
           type="submit"
           style={{
-            width: '100%', padding: '8px 0',
-            background: orderType === 'stop' ? 'var(--danger)' : (effectiveSide === 'BUY' ? 'var(--accent)' : 'var(--danger)'),
-            color: effectiveSide === 'BUY' && orderType !== 'stop' ? 'var(--bg-base)' : 'var(--text-primary)',
-            border: '1px solid var(--border)', borderRadius: 4, fontWeight: 700, cursor: 'pointer', fontSize: 13,
+            width: '100%',
+            padding: 13,
+            background: submitColor,
+            color: effectiveSide === 'BUY' && orderType !== 'stop' ? '#0E1117' : '#fff',
+            border: 0,
+            borderRadius: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontSize: 14,
           }}
         >
-          {orderType === 'market' && `${effectiveSide} ${symbol.replace('USDT', '')} (Market)`}
-          {orderType === 'limit' && `Place Limit ${effectiveSide}`}
-          {orderType === 'stop' && `Set Stop-Loss`}
+          {orderType === 'stop' ? 'Set Stop-Loss' : `${effectiveSide === 'BUY' ? 'Buy' : 'Sell'} ${baseAsset}`}
         </button>
       </form>
 
       {pendingOrders.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <div style={{ color: 'var(--text-muted)', marginBottom: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        <div style={{ marginTop: 20 }}>
+          <div style={{ ...labelStyle, marginBottom: 8 }}>
             Open Orders ({pendingOrders.length})
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             {pendingOrders.map(order => (
               <div key={order.id} style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto',
-                alignItems: 'center', padding: '5px 8px',
-                background: 'var(--bg-hover)', borderRadius: 4,
-                border: `1px solid ${order.status === 'PENDING' ? 'var(--accent)' : 'var(--border)'}`,
-                fontSize: 11, gap: 4,
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr auto',
+                alignItems: 'center',
+                padding: '8px 10px',
+                background: '#1C2236',
+                borderRadius: 8,
+                border: `1px solid ${order.status === 'PENDING' ? '#00C896' : '#232A3E'}`,
+                fontSize: 11,
+                gap: 6,
               }}>
                 <div>
-                  <span style={{ color: order.side === 'BUY' ? 'var(--accent)' : 'var(--danger)', fontWeight: 700 }}>{order.side}</span>
-                  {' '}
-                  <span style={{ color: 'var(--text-muted)' }}>{order.orderType}</span>
+                  <span style={{ color: order.side === 'BUY' ? '#00C896' : '#E5534B', fontWeight: 700 }}>{order.side}</span>{' '}
+                  <span style={{ color: '#6B7599' }}>{order.orderType}</span>
                 </div>
-                <div style={{ color: 'var(--text-primary)' }}>
+                <div style={{ color: '#E8EAF2', fontVariantNumeric: 'tabular-nums' }}>
                   {order.triggerPrice
                     ? `@ ${order.triggerPrice.toLocaleString(undefined, { maximumFractionDigits: 4 })}`
                     : `@ ${order.price.toLocaleString(undefined, { maximumFractionDigits: 4 })}`
                   }
                 </div>
-                <div>
-                  <span style={{ color: order.status === 'PENDING' ? 'var(--accent)' : 'var(--accent)', fontWeight: 600 }}>
-                    {order.status}
-                  </span>
-                </div>
                 <button
                   onClick={() => onCancelOrder(order.id)}
-                  style={{ padding: '2px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 3, color: 'var(--text-muted)', cursor: 'pointer', fontSize: 10 }}
+                  style={{ padding: '3px 7px', background: '#0E1117', border: '1px solid #232A3E', borderRadius: 5, color: '#6B7599', cursor: 'pointer', fontSize: 10 }}
                 >
                   ✕
                 </button>
