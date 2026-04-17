@@ -253,48 +253,70 @@ const App: React.FC = () => {
 
   // ── Desktop Layout ───────────────────────────────────────────────────────────
   const desktopBottomTabs = ['securities', 'buysell', 'orders', 'trades', 'journal'] as const;
+  const chartIntervals = ['1m', '5m', '1h', '4h', '1d'];
   const tabLabel = (t: typeof desktopBottomTabs[number]) => {
     if (t === 'buysell') return 'Buy/Sell';
     if (t === 'journal') return '📓 Journal';
     return t.charAt(0).toUpperCase() + t.slice(1);
   };
+  const formatMarketValue = (value?: string, maximumFractionDigits = 4) =>
+    value ? parseFloat(value).toLocaleString(undefined, { maximumFractionDigits }) : '—';
+  const marketStats = [
+    { label: 'Market Price', value: formatMarketValue(ticker?.lastPrice, 6), color: '#E8EAF2', large: true },
+    { label: '24h Change', value: `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`, color: change >= 0 ? '#00C896' : '#E5534B' },
+    { label: '24h High', value: formatMarketValue(ticker?.highPrice), color: '#E8EAF2' },
+    { label: '24h Low', value: formatMarketValue(ticker?.lowPrice), color: '#E8EAF2' },
+    { label: '24h Volume', value: formatMarketValue(ticker?.volume, 0), color: '#E8EAF2' },
+  ];
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} activeSection="trade" onNavigateTrade={() => setPage('terminal')} onNavigateDashboard={() => setPage('leaderboard')} />
 
-      <div style={{ display: 'flex', alignItems: 'center', padding: '5px 12px', background: 'var(--bg-panel)', borderBottom: '1px solid var(--border)', gap: 10, flexShrink: 0 }}>
-        {isDemo && <span style={{ padding: '2px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 12, fontSize: 10, color: 'var(--accent)' }}>DEMO</span>}
-
-        <select value={symbol} onChange={e => setSymbol(e.target.value)} style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 4, padding: '3px 8px', fontSize: 13 }}>
-          {SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-
-        <button onClick={() => setPage('heatmap')} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-muted)', padding: '3px 10px', cursor: 'pointer', fontSize: 12 }}>Market Heatmap</button>
-
-        <div style={{ display: 'flex', gap: 2 }}>
-          {INTERVALS.map(iv => (
-            <button key={iv} onClick={() => setInterval(iv)} style={{ padding: '3px 8px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 3, cursor: 'pointer', background: interval === iv ? 'var(--accent)' : 'var(--bg-card)', color: interval === iv ? 'var(--bg-base)' : 'var(--text-muted)', fontWeight: interval === iv ? 700 : 400 }}>{iv}</button>
-          ))}
-        </div>
-
-        {ticker && (
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 14, alignItems: 'center', fontSize: 13 }}>
-            <span style={{ fontSize: 17, fontWeight: 800, color: change >= 0 ? 'var(--accent)' : 'var(--danger)' }}>
-              {parseFloat(ticker.lastPrice).toLocaleString(undefined, { maximumFractionDigits: 6 })}
-            </span>
-            <span style={{ color: change >= 0 ? 'var(--accent)' : 'var(--danger)' }}>{change >= 0 ? '+' : ''}{change.toFixed(2)}%</span>
-            <span style={{ color: 'var(--text-muted)' }}>H: {parseFloat(ticker.highPrice).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
-            <span style={{ color: 'var(--text-muted)' }}>L: {parseFloat(ticker.lowPrice).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
-            <span style={{ color: 'var(--text-muted)' }}>Vol: {parseFloat(ticker.volume).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+      <div style={{ display: 'flex', alignItems: 'stretch', background: '#161B27', borderBottom: '1px solid #232A3E', flexShrink: 0, minHeight: 58, overflowX: 'auto' }}>
+        {marketStats.map(stat => (
+          <div key={stat.label} style={{ minWidth: stat.large ? 190 : 138, padding: '10px 18px', borderRight: '1px solid #232A3E', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5, fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ color: '#6B7599', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1 }}>{stat.label}</span>
+            <span style={{ color: stat.color, fontSize: stat.large ? 20 : 13, fontWeight: stat.large ? 800 : 700, lineHeight: 1 }}>{stat.value}</span>
           </div>
-        )}
+        ))}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', borderLeft: '1px solid #232A3E', flexShrink: 0 }}>
+          {isDemo && <span style={{ padding: '2px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 12, fontSize: 10, color: 'var(--accent)' }}>DEMO</span>}
+          <select value={symbol} onChange={e => setSymbol(e.target.value)} style={{ background: '#1C2236', color: '#E8EAF2', border: '1px solid #232A3E', borderRadius: 8, padding: '7px 10px', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+            {SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <button onClick={() => setPage('heatmap')} style={{ background: '#1C2236', border: '1px solid #232A3E', borderRadius: 8, color: '#6B7599', padding: '7px 12px', cursor: 'pointer', fontSize: 12 }}>Market Heatmap</button>
+        </div>
       </div>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <Chart klines={klines} symbol={symbol} />
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#0E1117' }}>
+            <div style={{ height: 40, background: '#161B27', borderBottom: '1px solid #232A3E', display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', flexShrink: 0 }}>
+              {chartIntervals.map(iv => (
+                <button
+                  key={iv}
+                  onClick={() => setInterval(iv)}
+                  style={{
+                    height: 24,
+                    padding: '0 10px',
+                    border: '1px solid #232A3E',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    background: interval === iv ? '#232A3E' : '#1C2236',
+                    color: interval === iv ? '#E8EAF2' : '#6B7599',
+                    fontSize: 11,
+                    fontWeight: interval === iv ? 700 : 600,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {iv}
+                </button>
+              ))}
+            </div>
+            <div style={{ flex: 1, minHeight: 0, background: '#0E1117' }}>
+              <Chart klines={klines} symbol={symbol} />
+            </div>
           </div>
           <div style={{ height: 265, borderTop: '1px solid var(--border)', background: 'var(--bg-panel)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>

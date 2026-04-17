@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData } from 'lightweight-charts';
+import { createChart, IChartApi, ISeriesApi, CandlestickData, HistogramData, LineData } from 'lightweight-charts';
 import { Kline } from '../types';
 
 interface Props {
@@ -56,6 +56,7 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
   const upperRef = useRef<ISeriesApi<'Line'> | null>(null);
   const lowerRef = useRef<ISeriesApi<'Line'> | null>(null);
   const vwapRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null);
 
   const [showSma, setShowSma] = useState(true);
   const [showBB, setShowBB] = useState(true);
@@ -63,22 +64,27 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const styles = getComputedStyle(document.documentElement);
     const theme = {
-      bgBase: styles.getPropertyValue('--bg-base').trim(),
-      accent: styles.getPropertyValue('--accent').trim(),
-      danger: styles.getPropertyValue('--danger').trim(),
-      textMuted: styles.getPropertyValue('--text-muted').trim(),
-      border: styles.getPropertyValue('--border').trim(),
+      bgBase: '#0E1117',
+      accent: '#00C896',
+      accentVolume: 'rgba(0, 200, 150, 0.3)',
+      danger: '#E5534B',
+      dangerVolume: 'rgba(229, 83, 75, 0.3)',
+      textMuted: '#6B7599',
+      border: '#232A3E',
     };
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
       layout: { background: { color: theme.bgBase }, textColor: theme.textMuted },
       grid: { vertLines: { color: theme.border }, horzLines: { color: theme.border } },
-      crosshair: { mode: 1 },
-      timeScale: { timeVisible: true, secondsVisible: false, borderColor: theme.border },
-      rightPriceScale: { borderColor: theme.border },
+      crosshair: {
+        mode: 1,
+        vertLine: { color: theme.textMuted, width: 1, style: 2 },
+        horzLine: { color: theme.textMuted, width: 1, style: 2 },
+      },
+      timeScale: { timeVisible: true, secondsVisible: false, borderVisible: false },
+      rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.08, bottom: 0.24 } },
     });
     chartRef.current = chart;
     candleRef.current = chart.addCandlestickSeries({
@@ -86,6 +92,14 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
       borderUpColor: theme.accent, borderDownColor: theme.danger,
       wickUpColor: theme.accent, wickDownColor: theme.danger,
     });
+    volumeRef.current = chart.addHistogramSeries({
+      color: theme.accentVolume,
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+      priceLineVisible: false,
+      lastValueVisible: false,
+    });
+    chart.priceScale('').applyOptions({ scaleMargins: { top: 0.78, bottom: 0 } });
     smaRef.current = chart.addLineSeries({ color: theme.accent, lineWidth: 1, title: 'SMA20' });
     upperRef.current = chart.addLineSeries({ color: theme.accent, lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
     lowerRef.current = chart.addLineSeries({ color: theme.accent, lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
@@ -125,6 +139,13 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
     }));
     candleRef.current.setData(candleData);
 
+    const volumeData: HistogramData[] = klines.map(k => ({
+      time: k.time as HistogramData['time'],
+      value: k.volume,
+      color: k.close >= k.open ? 'rgba(0, 200, 150, 0.3)' : 'rgba(229, 83, 75, 0.3)',
+    }));
+    volumeRef.current?.setData(volumeData);
+
     const closes = klines.map(k => k.close);
     const { sma, upper, lower } = calcBollingerBands(closes, 20, 2);
     const vwap = calcVWAP(klines);
@@ -152,8 +173,8 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
   const checkboxStyle = (color: string, checked: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer',
     padding: '2px 8px', borderRadius: 4,
-    background: checked ? 'var(--accent-dim)' : 'var(--bg-card)',
-    border: `1px solid ${checked ? color : 'var(--border)'}`,
+    background: checked ? 'rgba(0,200,150,0.12)' : '#1C2236',
+    border: `1px solid ${checked ? color : '#232A3E'}`,
     color: checked ? color : 'var(--text-muted)',
     fontSize: 11, fontWeight: 600, userSelect: 'none',
     transition: 'all 0.15s',
@@ -168,7 +189,7 @@ const Chart: React.FC<Props> = ({ klines, symbol }) => {
     : null;
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative', background: '#0E1117' }}>
       <div style={{
         position: 'absolute', top: 8, left: 8, zIndex: 10,
         display: 'flex', gap: 6, alignItems: 'center',
