@@ -1,0 +1,166 @@
+Starting StockSharp Web Terminal...
+
+Backend server started (PID: 673)
+/home/runner/workspace/node_modules/stripe/cjs/stripe.core.js:288
+            throw new Error('Neither apiKey nor config.authenticator provided');
+            ^
+
+Error: Neither apiKey nor config.authenticator provided
+    at Stripe._setAuthenticator (/home/runner/workspace/node_modules/[4mstripe[24m/cjs/stripe.core.js:288:19)
+    at new Stripe (/home/runner/workspace/node_modules/[4mstripe[24m/cjs/stripe.core.js:179:14)
+    at StripeConstructor (/home/runner/workspace/node_modules/[4mstripe[24m/cjs/stripe.cjs.node.js:13:16)
+    at Object.<anonymous> [90m(/home/runner/workspace/server/[39mindex.js:12:16[90m)[39m
+[90m    at Module._compile (node:internal/modules/cjs/loader:1521:14)[39m
+[90m    at Module._extensions..js (node:internal/modules/cjs/loader:1623:10)[39m
+[90m    at Module.load (node:internal/modules/cjs/loader:1266:32)[39m
+[90m    at Module._load (node:internal/modules/cjs/loader:1091:12)[39m
+[90m    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)[39m
+[90m    at node:internal/main/run_main_module:28:49[39m
+
+Node.js v20.20.0
+
+> stocksharp-client@1.0.0 dev
+> vite --host 0.0.0.0 --port 5000
+
+[1G[0K
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J
+  [32m[1mVITE[22m v4.5.14[39m  [2mready in [0m[1m562[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5000[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.31.76.2:[1m5000[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh[22m[2m to show help[22m
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/wallet:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/klines?symbol=BTCUSDT&interval=1m&limit=500:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/depth?symbol=BTCUSDT&limit=20:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr?symbol=BTCUSDT:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/trades?symbol=BTCUSDT&limit=50:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/wallet:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/depth?symbol=BTCUSDT&limit=20:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mws proxy error:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr?symbol=BTCUSDT:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/trades?symbol=BTCUSDT&limit=50:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/klines?symbol=BTCUSDT&interval=1m&limit=500:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:23:58 PM[22m [31m[1m[vite][22m[39m [31mws proxy error:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:01 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/wallet:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/klines?symbol=BTCUSDT&interval=1m&limit=500:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/depth?symbol=BTCUSDT&limit=20:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr?symbol=BTCUSDT:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/trades?symbol=BTCUSDT&limit=50:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/wallet:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mws proxy error:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/klines?symbol=BTCUSDT&interval=1m&limit=500:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/depth?symbol=BTCUSDT&limit=20:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr?symbol=BTCUSDT:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:02 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/trades?symbol=BTCUSDT&limit=50:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:07 PM[22m [31m[1m[vite][22m[39m [31mhttp proxy error at /api/ticker/24hr:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+[2m2:24:07 PM[22m [31m[1m[vite][22m[39m [31mws proxy error:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m2:24:08 PM[22m [31m[1m[vite][22m[39m [31mws proxy error:[39m
+Error: connect ECONNREFUSED 127.0.0.1:3001
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) [33m(x2)[39m
