@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../lib/api';
 import { Wallet } from '../types';
 import { apiHeaders } from '../hooks/useSession';
 
@@ -23,7 +24,7 @@ const WalletBar: React.FC<Props> = ({
 
   const fetch_ = async () => {
     try {
-      const r = await fetch('/api/wallet', { headers: { 'x-session-id': sessionId } });
+      const r = await fetch(apiUrl('/api/wallet'), { headers: { 'x-session-id': sessionId } });
       const w = await r.json();
       setWallet(w);
       setName(w.username);
@@ -35,7 +36,7 @@ const WalletBar: React.FC<Props> = ({
   const saveUsername = async () => {
     if (!name.trim()) return;
     try {
-      const r = await fetch('/api/wallet/set-username', {
+      const r = await fetch(apiUrl('/api/wallet/set-username'), {
         method: 'POST',
         headers: apiHeaders(sessionId),
         body: JSON.stringify({ username: name.trim() }),

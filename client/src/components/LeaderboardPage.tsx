@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../lib/api';
 import { LeaderboardEntry } from '../types';
 
 interface Props {
@@ -15,8 +16,8 @@ const LeaderboardPage: React.FC<Props> = ({ sessionId, onBack }) => {
     const load = async () => {
       try {
         const [lb, w] = await Promise.all([
-          fetch('/api/leaderboard').then(r => r.json()),
-          fetch('/api/wallet', { headers: { 'x-session-id': sessionId } }).then(r => r.json()),
+          fetch(apiUrl('/api/leaderboard')).then(r => r.json()),
+          fetch(apiUrl('/api/wallet'), { headers: { 'x-session-id': sessionId } }).then(r => r.json()),
         ]);
         setEntries(lb);
         setMyUsername(w.username);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../lib/api';
 import { SYMBOLS } from '../types';
 
 interface SymbolData {
@@ -34,7 +35,7 @@ const SecuritiesTable: React.FC<Props> = ({ selectedSymbol, onSelectSymbol }) =>
   useEffect(() => {
     const fetchTickers = async () => {
       try {
-        const res = await fetch('/api/ticker/24hr');
+        const res = await fetch(apiUrl('/api/ticker/24hr'));
         if (!res.ok || res.status === 451) throw new Error('failed');
         const all: SymbolData[] = await res.json();
         const filtered = SYMBOLS.map(sym => all.find((t: SymbolData) => t.symbol === sym)).filter(Boolean) as SymbolData[];

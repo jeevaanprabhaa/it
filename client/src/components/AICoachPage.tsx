@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../lib/api';
 import { CoachAnalysis, RiskDna } from '../types';
 
 interface Props {
@@ -103,7 +104,7 @@ const AICoachPage: React.FC<Props> = ({ sessionId, onBack }) => {
   const refresh = async () => {
     setLoading(true);
     try {
-      const r = await fetch('/api/coach', { headers: { 'x-session-id': sessionId } });
+      const r = await fetch(apiUrl('/api/coach'), { headers: { 'x-session-id': sessionId } });
       setAnalysis(await r.json());
     } catch {}
     setLoading(false);

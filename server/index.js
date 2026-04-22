@@ -19,15 +19,21 @@ const allowedOriginPatterns = [
   /^https?:\/\/127\.0\.0\.1(:\d+)?$/,
   /^https:\/\/.*\.replit\.dev$/,
   /^https:\/\/.*\.replit\.app$/,
+  /^https:\/\/.*\.vercel\.app$/,
 ];
+
+// Allow extra origins via env (comma-separated, e.g. "https://zex.example.com")
+const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOriginPatterns.some(pattern => pattern.test(origin))) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
+    if (!origin) return callback(null, true);
+    if (extraOrigins.includes(origin)) return callback(null, true);
+    if (allowedOriginPatterns.some(p => p.test(origin))) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
+  credentials: true,
 }));
 app.use(express.json());
 

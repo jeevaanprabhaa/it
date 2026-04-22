@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { apiUrl } from '../lib/api';
 import { apiHeaders } from '../hooks/useSession';
 
 interface Props {
@@ -26,7 +27,7 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
     setLoading(true);
     setError('');
     try {
-      const r = await fetch('/api/wallet/deposit', {
+      const r = await fetch(apiUrl('/api/wallet/deposit'), {
         method: 'POST',
         headers: apiHeaders(sessionId),
         body: JSON.stringify({ amount: amountUsd * 100 }),
@@ -62,7 +63,7 @@ const DepositModal: React.FC<Props> = ({ sessionId, publishableKey, onClose, onS
     await new Promise(r => setTimeout(r, 2200));
 
     try {
-      const r = await fetch('/api/wallet/deposit-confirm', {
+      const r = await fetch(apiUrl('/api/wallet/deposit-confirm'), {
         method: 'POST',
         headers: apiHeaders(sessionId),
         body: JSON.stringify({ virtualCredits, paymentIntentId: clientSecret?.split('_secret')[0] }),

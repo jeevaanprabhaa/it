@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiUrl } from '../lib/api';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 interface HeatmapAsset {
@@ -71,7 +72,7 @@ const HeatmapPage: React.FC<Props> = ({ onSelectSymbol, onNavigateHome }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch('/api/heatmap');
+      const res = await fetch(apiUrl('/api/heatmap'));
       const json: HeatmapData = await res.json();
       setHeatmapData(json);
     } catch {}

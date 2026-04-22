@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { apiUrl,wsUrl } from './lib/api';
 import Chart from './components/Chart';
 import OrderBook from './components/OrderBook';
 import SecuritiesTable from './components/SecuritiesTable';
@@ -59,7 +60,7 @@ const App: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch('/api/orders', { headers: apiHeaders(sessionId) });
+        const r = await fetch(apiUrl('/api/orders'), { headers: apiHeaders(sessionId) });
         if (r.ok) {
           const data = await r.json();
           if (Array.isArray(data)) setOrders(data);
@@ -73,7 +74,7 @@ const App: React.FC = () => {
     let ws: WebSocket;
     let retryTimeout: ReturnType<typeof setTimeout>;
     const connect = () => {
-      ws = new WebSocket(`${proto}://${window.location.host}/ws`);
+      ws = new WebSocket(wsUrl());
       ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data);
@@ -119,12 +120,12 @@ const App: React.FC = () => {
         setJournalOrder(filledOrder);
         setJournalKey(k => k + 1);
         try {
-          await fetch('/api/orders', {
+          await fetch(apiUrl('/api/orders'), {
             method: 'POST',
             headers: apiHeaders(sessionId),
             body: JSON.stringify({ ...filledOrder, status: 'FILLED' }),
           });
-          await fetch('/api/wallet/update-pnl', {
+          await fetch(apiUrl('/api/wallet/update-pnl'), {
             method: 'POST',
             headers: apiHeaders(sessionId),
             body: JSON.stringify({ pnl }),
@@ -138,13 +139,13 @@ const App: React.FC = () => {
 
   const handleCancelOrder = useCallback(async (id: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'CANCELLED' as const } : o));
-    try { await fetch(`/api/orders/${id}`, { method: 'DELETE' }); } catch {}
+    try { await fetch(apiUrl(`/api/orders/${id}`), { method: 'DELETE' }); } catch {}
   }, []);
 
   const handleJournalSave = useCallback(async (entry: { reason: string; emotion: Emotion; market_condition: MarketCondition; notes: string }) => {
     if (!journalOrder) return;
     try {
-      await fetch('/api/journal/entry', {
+      await fetch(apiUrl('/api/journal/entry'), {
         method: 'POST',
         headers: apiHeaders(sessionId),
         body: JSON.stringify({ trade_id: journalOrder.id, ...entry, trade: journalOrder }),

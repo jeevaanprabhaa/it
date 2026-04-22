@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../lib/api';
 import { Order, OrderType, Wallet } from '../types';
 import { apiHeaders } from '../hooks/useSession';
 
@@ -65,7 +66,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch('/api/wallet', { headers: { 'x-session-id': sessionId } });
+        const r = await fetch(apiUrl('/api/wallet'), { headers: { 'x-session-id': sessionId } });
         const w = await r.json();
         if (!cancelled) setWallet(w);
       } catch {}
@@ -125,7 +126,7 @@ const OrderPanel: React.FC<Props> = ({ symbol, lastPrice, orders, onPlaceOrder, 
 
     if (orderType !== 'market') {
       try {
-        await fetch('/api/orders', {
+        await fetch(apiUrl('/api/orders'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(order),

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { apiUrl,wsUrl } from '../lib/api';
 import { Kline, OrderBook, Trade, Ticker } from '../types';
 
 function generateDemoKlines(symbol: string, interval: string, count = 500): Kline[] {
@@ -118,10 +119,10 @@ export function useMarketData(symbol: string, interval: string) {
     const fetchData = async () => {
       try {
         const [klinesRes, depthRes, tickerRes, tradesRes] = await Promise.all([
-          fetch(`/api/klines?symbol=${symbol}&interval=${interval}&limit=500`),
-          fetch(`/api/depth?symbol=${symbol}&limit=20`),
-          fetch(`/api/ticker/24hr?symbol=${symbol}`),
-          fetch(`/api/trades?symbol=${symbol}&limit=50`),
+          fetch(apiUrl(`/api/klines?symbol=${symbol}&interval=${interval}&limit=500`)),
+          fetch(apiUrl(`/api/depth?symbol=${symbol}&limit=20`)),
+          fetch(apiUrl(`/api/ticker/24hr?symbol=${symbol}`)),
+          fetch(apiUrl(`/api/trades?symbol=${symbol}&limit=50`)),
         ]);
 
         if (!klinesRes.ok || klinesRes.status === 451) throw new Error('geo-blocked');
@@ -150,7 +151,7 @@ export function useMarketData(symbol: string, interval: string) {
         setTrades(tradesData.slice(0, 50));
         setConnected(true);
 
-        const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`);
+        const ws = new WebSocket(wsUrl());
         wsRef.current = ws;
         ws.onopen = () => {
           ws.send(JSON.stringify({ type: 'subscribe', symbol: symbol.toLowerCase(), stream: `kline_${interval}` }));

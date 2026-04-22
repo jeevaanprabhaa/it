@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiUrl } from '../lib/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { JournalEntry, Analytics, Emotion } from '../types';
 
@@ -35,8 +36,8 @@ const JournalTab: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       const [entriesRes, analyticsRes] = await Promise.all([
-        fetch('/api/journal'),
-        fetch('/api/journal/analytics'),
+        fetch(apiUrl('/api/journal')),
+        fetch(apiUrl('/api/journal/analytics')),
       ]);
       const entriesData = await entriesRes.json();
       const analyticsData = await analyticsRes.json();
