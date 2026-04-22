@@ -222,7 +222,7 @@ const JournalTab: React.FC = () => {
                         <XAxis dataKey="emotion" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                         <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                         <Tooltip
-                          formatter={(v: number) => [`${v}%`, 'Win Rate']}
+                         formatter={(v: number | undefined) => [String(v ?? 0), ""]}
                           contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12 }}
                           labelStyle={{ color: 'var(--text-primary)' }}
                         />
