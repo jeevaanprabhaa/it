@@ -4,12 +4,15 @@ const http = require('http');
 const WebSocket = require('ws');
 const https = require('https');
 const Stripe = require('stripe');
+const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const CC_STREAM_API_KEY = process.env.CRYPTOCOMPARE_API_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 const stripe = process.env.STRIPE_SECRET_KEY ? Stripe(process.env.STRIPE_SECRET_KEY) : null;
+console.log('Stripe configured:', !!stripe);
 
 const allowedOriginPatterns = [
   /^https?:\/\/localhost(:\d+)?$/,
@@ -314,108 +317,103 @@ app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: Date.now() 
 // VIRTUAL WALLET + STRIPE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// In-memory users (keyed by sessionId)
-const virtualWallets = {};
 
-function getWallet(sessionId) {
-  if (!virtualWallets[sessionId]) {
-    virtualWallets[sessionId] = {
-      sessionId,
-      balance: 10000,       // start with $10,000 virtual
-      deposited: 0,
-      pnlTotal: 0,
-      tradesCount: 0,
-      winsCount: 0,
-      username: `Trader_${sessionId.slice(0, 6)}`,
-      createdAt: Date.now(),
-    };
-  }
-  return virtualWallets[sessionId];
-}
-
-app.get('/api/wallet', (req, res) => {
-  const sid = req.headers['x-session-id'] || 'default';
-  res.json(getWallet(sid));
+// ─── Wallet ───────────────────────────────────────────────────────────────────
+app.get('/api/wallet', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'] || 'default';
+    res.json(await db.getOrCreateWallet(sid));
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/wallet/update-pnl', (req, res) => {
-  const sid = req.headers['x-session-id'] || 'default';
-  const { pnl } = req.body;
-  const w = getWallet(sid);
-  w.pnlTotal = parseFloat((w.pnlTotal + pnl).toFixed(2));
-  w.balance = parseFloat((w.balance + pnl).toFixed(2));
-  w.tradesCount++;
-  if (pnl > 0) w.winsCount++;
-  res.json(w);
+app.post('/api/wallet/update-pnl', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'] || 'default';
+    const pnl = parseFloat(req.body.pnl);
+    if (isNaN(pnl)) return res.status(400).json({ error: 'pnl required' });
+    res.json(await db.updateWalletPnl(sid, pnl));
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/wallet/set-username', (req, res) => {
-  const sid = req.headers['x-session-id'] || 'default';
-  const { username } = req.body;
-  if (!username || username.length < 2 || username.length > 20) {
-    return res.status(400).json({ error: 'Username must be 2-20 characters' });
-  }
-  const w = getWallet(sid);
-  w.username = username.trim();
-  res.json(w);
+app.post('/api/wallet/set-username', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'] || 'default';
+    const { username } = req.body;
+    if (!username || username.length < 2 || username.length > 20)
+      return res.status(400).json({ error: 'Username must be 2-20 characters' });
+    res.json(await db.setUsername(sid, username.trim()));
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-// ─── Stripe Payment Intent: deposit virtual credits ───────────────────────────
+// ─── Stripe Deposit ───────────────────────────────────────────────────────────
 // $1 real → $1,000 virtual credits
 app.post('/api/wallet/deposit', async (req, res) => {
   const sid = req.headers['x-session-id'] || 'default';
-  const { amount } = req.body; // real USD in cents, e.g. 100 = $1
-
-  if (!amount || amount < 100 || amount > 100000) {
+  const { amount } = req.body; // cents
+  if (!amount || amount < 100 || amount > 100000)
     return res.status(400).json({ error: 'Amount must be between $1 and $1,000' });
-  }
-  if (!stripe) {
-    return res.status(503).json({ error: 'Payment not configured' });
-  }
+  if (!stripe) return res.status(503).json({ error: 'Payment not configured' });
 
   try {
+    await db.getOrCreateWallet(sid);
+    const virtualCredits = amount * 10; // $1 → $10 virtual (kept consistent with previous client expectation)
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,            // cents
+      amount,
       currency: 'usd',
-      metadata: { sessionId: sid, virtualCredits: amount * 1000 },  // $1 → $1000 virtual
-      description: `AlgoTrader virtual credits: $${(amount / 100).toFixed(2)} real → $${(amount * 10).toLocaleString()} virtual`,
+      metadata: { sessionId: sid, virtualCredits: String(virtualCredits) },
+      description: `ZEX virtual credits: $${(amount / 100).toFixed(2)} → $${virtualCredits.toLocaleString()} virtual`,
+      automatic_payment_methods: { enabled: true },
     });
-    res.json({ clientSecret: paymentIntent.client_secret, virtualCredits: amount * 10 });
+    await db.insertDeposit(sid, paymentIntent.id, amount, virtualCredits);
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      virtualCredits,
+    });
   } catch (e) {
     console.error('Stripe error:', e.message);
     res.status(500).json({ error: e.message });
   }
 });
 
-// Called after payment confirmed client-side
-app.post('/api/wallet/deposit-confirm', (req, res) => {
+// Confirm after client-side payment success
+app.post('/api/wallet/deposit-confirm', async (req, res) => {
   const sid = req.headers['x-session-id'] || 'default';
-  const { virtualCredits, paymentIntentId } = req.body;
-  const w = getWallet(sid);
-  w.balance = parseFloat((w.balance + virtualCredits).toFixed(2));
-  w.deposited = parseFloat((w.deposited + virtualCredits).toFixed(2));
-  console.log(`Deposit confirmed: session=${sid} +$${virtualCredits} virtual (pi=${paymentIntentId})`);
-  res.json({ success: true, wallet: w });
+  const { paymentIntentId } = req.body;
+  if (!stripe) return res.status(503).json({ error: 'Payment not configured' });
+  if (!paymentIntentId) return res.status(400).json({ error: 'paymentIntentId required' });
+
+  try {
+    // Verify the payment with Stripe — never trust the client
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (pi.status !== 'succeeded')
+      return res.status(400).json({ error: `Payment not succeeded: ${pi.status}` });
+    if (pi.metadata?.sessionId && pi.metadata.sessionId !== sid)
+      return res.status(403).json({ error: 'Session mismatch' });
+
+    const credits = parseFloat(pi.metadata?.virtualCredits || (pi.amount * 10));
+    const updated = await db.markDepositSucceeded(paymentIntentId);
+    if (updated) {
+      const wallet = await db.creditBalance(sid, credits);
+      console.log(`Deposit confirmed: session=${sid} +$${credits} virtual (pi=${paymentIntentId})`);
+      broadcastToFrontend({ type: 'wallet_update', sessionId: sid, wallet });
+      return res.json({ success: true, wallet });
+    }
+    // Already credited
+    res.json({ success: true, wallet: await db.getOrCreateWallet(sid), alreadyCredited: true });
+  } catch (e) {
+    console.error('Deposit confirm error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
-app.get('/api/leaderboard', (req, res) => {
-  const entries = Object.values(virtualWallets)
-    .filter(w => w.tradesCount > 0)
-    .map(w => ({
-      username: w.username,
-      pnlTotal: w.pnlTotal,
-      tradesCount: w.tradesCount,
-      winRate: w.tradesCount > 0 ? parseFloat(((w.winsCount / w.tradesCount) * 100).toFixed(1)) : 0,
-      balance: w.balance,
-    }))
-    .sort((a, b) => b.pnlTotal - a.pnlTotal)
-    .slice(0, 20);
-  res.json(entries);
+app.get('/api/leaderboard', async (req, res) => {
+  try { res.json(await db.getLeaderboard()); }
+  catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-// ─── AI Trade Coach ────────────────────────────────────────────────────────────
-// Rule-based behavioral analysis (no external AI API needed — impressive for FYP)
+// ─── Trader analytics (rule-based behavioral coach) ───────────────────────────
 function analyzeTrader(journalEntries, orders) {
   const filled = orders.filter(o => o.status === 'FILLED' && typeof o.pnl === 'number');
   if (filled.length === 0) return { score: 50, insights: [], riskDna: null, badges: [] };
@@ -428,7 +426,6 @@ function analyzeTrader(journalEntries, orders) {
   const rr = avgLoss > 0 ? avgWin / avgLoss : 0;
   const totalPnl = filled.reduce((s, o) => s + o.pnl, 0);
 
-  // Emotion analysis
   const emotionCounts = {};
   const emotionPnl = {};
   journalEntries.forEach(e => {
@@ -441,58 +438,39 @@ function analyzeTrader(journalEntries, orders) {
   const badges = [];
   let score = 50;
 
-  // Win rate insight
   if (winRate >= 0.6) { score += 15; badges.push({ id: 'sharp', label: '🎯 Sharp Shooter', desc: 'Win rate above 60%' }); }
   else if (winRate < 0.4) { score -= 10; insights.push({ type: 'warning', text: `Your win rate is ${(winRate*100).toFixed(0)}%. Focus on entry timing — only trade your highest-conviction setups.` }); }
 
-  // Risk/reward
-  if (rr >= 2) { score += 15; badges.push({ id: 'rr', label: '⚖️ Risk Master', desc: 'Average R:R above 2:1' }); insights.push({ type: 'success', text: `Excellent R:R ratio of ${rr.toFixed(1)}:1. Your winners are much bigger than your losers.` }); }
-  else if (rr < 1 && losses > 0) { score -= 15; insights.push({ type: 'danger', text: `Your R:R is ${rr.toFixed(1)}:1 — you lose more per loss than you gain per win. Try setting a 1.5:1 minimum before entering trades.` }); }
+  if (rr >= 2) { score += 15; badges.push({ id: 'rr', label: '⚖️ Risk Master', desc: 'Average R:R above 2:1' }); insights.push({ type: 'success', text: `Excellent R:R ratio of ${rr.toFixed(1)}:1.` }); }
+  else if (rr < 1 && losses > 0) { score -= 15; insights.push({ type: 'danger', text: `Your R:R is ${rr.toFixed(1)}:1 — losses outweigh wins per trade.` }); }
 
-  // FOMO detection
   if (emotionCounts['fomo'] > 2) {
     const fomoPnl = emotionPnl['fomo'] || 0;
     score -= 10;
-    insights.push({ type: 'warning', text: `You've made ${emotionCounts['fomo']} FOMO trades. Total FOMO P&L: ${fomoPnl >= 0 ? '+' : ''}$${fomoPnl.toFixed(2)}. FOMO trades are often suboptimal — add a 15-min cooling-off rule.` });
+    insights.push({ type: 'warning', text: `${emotionCounts['fomo']} FOMO trades. Total P&L: ${fomoPnl >= 0 ? '+' : ''}$${fomoPnl.toFixed(2)}.` });
   }
-
-  // Overconfidence
   if (emotionCounts['greedy'] > 2 && (emotionPnl['greedy'] || 0) < 0) {
     score -= 10;
-    insights.push({ type: 'warning', text: `Greedy trades are losing you money ($${(emotionPnl['greedy'] || 0).toFixed(2)} total). Greed often leads to over-sizing or late entries.` });
+    insights.push({ type: 'warning', text: `Greedy trades are losing money ($${(emotionPnl['greedy'] || 0).toFixed(2)}).` });
+  }
+  if (emotionCounts['fearful'] > 0 && (emotionPnl['fearful'] || 0) > 0)
+    insights.push({ type: 'success', text: `Your fearful trades are profitable — fear is keeping you disciplined.` });
+  if (emotionCounts['confident'] > 0 && (emotionPnl['confident'] || 0) > 0) {
+    score += 10;
+    insights.push({ type: 'success', text: `Confident trades work well (+$${(emotionPnl['confident']||0).toFixed(2)}).` });
   }
 
-  // Fearful but profitable
-  if (emotionCounts['fearful'] > 0 && (emotionPnl['fearful'] || 0) > 0) {
-    insights.push({ type: 'success', text: `Interesting: your fearful trades are actually profitable! Fear may be keeping you disciplined — trust your analysis.` });
-  }
-
-  // Confident trading
-  if (emotionCounts['confident'] > 0) {
-    const confPnl = emotionPnl['confident'] || 0;
-    if (confPnl > 0) {
-      score += 10;
-      insights.push({ type: 'success', text: `Confident trades are working well for you (+$${confPnl.toFixed(2)}). Your conviction trades are your best.` });
-    }
-  }
-
-  // Loss streak detection
   const last5 = filled.slice(-5);
   if (last5.length === 5 && last5.every(o => o.pnl < 0)) {
     score -= 15;
-    insights.push({ type: 'danger', text: `⚠️ You're on a 5-trade losing streak. Consider stepping away for a few hours. Revenge trading will only make it worse.` });
+    insights.push({ type: 'danger', text: `⚠️ 5-trade losing streak. Step away to avoid revenge trading.` });
     badges.push({ id: 'drawdown', label: '🔥 Battle-Hardened', desc: 'Survived a 5-loss streak' });
   }
+  if (filled.length >= 10) badges.push({ id: 'active', label: '📊 Active Trader', desc: '10+ trades' });
+  if (filled.length >= 25) { score += 5; badges.push({ id: 'veteran', label: '🏆 Veteran', desc: '25+ trades' }); }
+  if (totalPnl > 0 && filled.length >= 5) badges.push({ id: 'profitable', label: '💚 Profitable Trader', desc: 'Net positive P&L' });
 
-  // Consistency
-  if (filled.length >= 10) { badges.push({ id: 'active', label: '📊 Active Trader', desc: '10+ trades completed' }); }
-  if (filled.length >= 25) { score += 5; badges.push({ id: 'veteran', label: '🏆 Veteran', desc: '25+ trades completed' }); }
-  if (totalPnl > 0 && filled.length >= 5) { badges.push({ id: 'profitable', label: '💚 Profitable Trader', desc: 'Net positive P&L' }); }
-
-  // Size: clamp
   score = Math.max(0, Math.min(100, score));
-
-  // Risk DNA profile
   const riskDna = {
     aggressiveness: Math.min(100, Math.round(filled.filter(o => o.quantity > 0.1).length / filled.length * 100 + (1 - winRate) * 30)),
     discipline: Math.min(100, Math.round(winRate * 60 + Math.min(rr, 3) * 13)),
@@ -500,77 +478,106 @@ function analyzeTrader(journalEntries, orders) {
     consistency: Math.min(100, Math.round(winRate * 50 + (filled.length >= 10 ? 30 : filled.length * 3))),
     riskReward: Math.min(100, Math.round(Math.min(rr / 3, 1) * 100)),
   };
-
   return { score, insights, riskDna, badges, stats: { winRate, avgWin, avgLoss, rr, totalPnl, wins, losses, trades: filled.length } };
 }
 
 // ─── Journal ──────────────────────────────────────────────────────────────────
-const journalEntries = [];
-
-app.post('/api/journal/entry', (req, res) => {
-  const { trade_id, reason, emotion, market_condition, notes, trade } = req.body;
-  if (!trade_id || !emotion) return res.status(400).json({ error: 'trade_id and emotion required' });
-  const entry = { id: Date.now().toString(), trade_id, reason: reason || '', emotion, market_condition: market_condition || 'ranging', notes: notes || '', trade: trade || null, created_at: Date.now() };
-  journalEntries.unshift(entry);
-  res.status(201).json(entry);
-});
-
-app.get('/api/journal', (req, res) => res.json(journalEntries));
-
-app.get('/api/journal/analytics', (req, res) => {
-  const emotions = ['confident', 'fearful', 'fomo', 'neutral', 'greedy'];
-  const win_rate_by_emotion = {};
-  const avg_pnl_by_emotion = {};
-  emotions.forEach(em => {
-    const group = journalEntries.filter(e => e.emotion === em && e.trade && typeof e.trade.pnl === 'number');
-    if (!group.length) { win_rate_by_emotion[em] = null; avg_pnl_by_emotion[em] = null; return; }
-    win_rate_by_emotion[em] = parseFloat((group.filter(e => e.trade.pnl > 0).length / group.length).toFixed(2));
-    avg_pnl_by_emotion[em] = parseFloat((group.reduce((s, e) => s + e.trade.pnl, 0) / group.length).toFixed(2));
-  });
-  const wordMap = {};
-  journalEntries.forEach(e => {
-    if (!e.reason || !e.trade || typeof e.trade.pnl !== 'number') return;
-    (e.reason.toLowerCase().match(/\b[a-z]{4,}\b/g) || []).forEach(w => {
-      if (!wordMap[w]) wordMap[w] = { count: 0, totalPnl: 0 };
-      wordMap[w].count++; wordMap[w].totalPnl += e.trade.pnl;
+app.post('/api/journal/entry', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'] || 'default';
+    const { trade_id, reason, emotion, market_condition, notes, trade } = req.body;
+    if (!trade_id || !emotion) return res.status(400).json({ error: 'trade_id and emotion required' });
+    const entry = await db.insertJournalEntry({
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+      sessionId: sid, trade_id, reason, emotion, market_condition, notes, trade,
     });
-  });
-  const most_profitable_reason_keywords = Object.entries(wordMap)
-    .sort((a, b) => b[1].totalPnl - a[1].totalPnl).slice(0, 5)
-    .map(([word, v]) => ({ word, avg_pnl: parseFloat((v.totalPnl / v.count).toFixed(2)), count: v.count }));
-  res.json({ win_rate_by_emotion, avg_pnl_by_emotion, most_profitable_reason_keywords });
+    res.status(201).json(entry);
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-// ─── AI Coach endpoint ─────────────────────────────────────────────────────────
-app.get('/api/coach', (req, res) => {
-  const sid = req.headers['x-session-id'] || 'default';
-  const myOrders = advancedOrders.filter(o => o.sessionId === sid || !o.sessionId);
-  const analysis = analyzeTrader(journalEntries, myOrders);
-  res.json(analysis);
+app.get('/api/journal', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'];
+    res.json(await db.getJournalEntries(sid));
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-// ─── Advanced Orders ──────────────────────────────────────────────────────────
-const advancedOrders = [];
-
-app.post('/api/orders', (req, res) => {
-  const sid = req.headers['x-session-id'] || 'default';
-  const { id, symbol, side, orderType, price, triggerPrice, quantity, time } = req.body;
-  if (!id || !symbol || !side || !orderType || !quantity) return res.status(400).json({ error: 'Missing required fields' });
-  const order = { id, symbol, side, orderType, price: price || 0, triggerPrice: triggerPrice || price || 0, quantity, status: 'PENDING', time: time || Date.now(), fillPrice: null, pnl: null, filledAt: null, sessionId: sid };
-  advancedOrders.push(order);
-  res.status(201).json(order);
+app.get('/api/journal/analytics', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'];
+    const entries = await db.getJournalEntries(sid);
+    const emotions = ['confident', 'fearful', 'fomo', 'neutral', 'greedy'];
+    const win_rate_by_emotion = {};
+    const avg_pnl_by_emotion = {};
+    emotions.forEach(em => {
+      const group = entries.filter(e => e.emotion === em && e.trade && typeof e.trade.pnl === 'number');
+      if (!group.length) { win_rate_by_emotion[em] = null; avg_pnl_by_emotion[em] = null; return; }
+      win_rate_by_emotion[em] = parseFloat((group.filter(e => e.trade.pnl > 0).length / group.length).toFixed(2));
+      avg_pnl_by_emotion[em] = parseFloat((group.reduce((s, e) => s + e.trade.pnl, 0) / group.length).toFixed(2));
+    });
+    const wordMap = {};
+    entries.forEach(e => {
+      if (!e.reason || !e.trade || typeof e.trade.pnl !== 'number') return;
+      (e.reason.toLowerCase().match(/\b[a-z]{4,}\b/g) || []).forEach(w => {
+        if (!wordMap[w]) wordMap[w] = { count: 0, totalPnl: 0 };
+        wordMap[w].count++; wordMap[w].totalPnl += e.trade.pnl;
+      });
+    });
+    const most_profitable_reason_keywords = Object.entries(wordMap)
+      .sort((a, b) => b[1].totalPnl - a[1].totalPnl).slice(0, 5)
+      .map(([word, v]) => ({ word, avg_pnl: parseFloat((v.totalPnl / v.count).toFixed(2)), count: v.count }));
+    res.json({ win_rate_by_emotion, avg_pnl_by_emotion, most_profitable_reason_keywords });
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/orders', (req, res) => res.json(advancedOrders));
-
-app.delete('/api/orders/:id', (req, res) => {
-  const order = advancedOrders.find(o => o.id === req.params.id);
-  if (!order) return res.status(404).json({ error: 'Not found' });
-  if (order.status === 'PENDING') order.status = 'CANCELLED';
-  res.json(order);
+// ─── AI Coach ─────────────────────────────────────────────────────────────────
+app.get('/api/coach', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'] || 'default';
+    const [orders, entries] = await Promise.all([
+      db.getOrdersForSession(sid),
+      db.getJournalEntries(sid),
+    ]);
+    res.json(analyzeTrader(entries, orders));
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
 });
 
-// ─── WebSocket + Binance Stream Relay ─────────────────────────────────────────
+// ─── Orders ───────────────────────────────────────────────────────────────────
+app.post('/api/orders', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'] || 'default';
+    const { id, symbol, side, orderType, price, triggerPrice, quantity, time, status, fillPrice, pnl } = req.body;
+    if (!id || !symbol || !side || !orderType || !quantity)
+      return res.status(400).json({ error: 'Missing required fields' });
+    const incomingStatus = status === 'FILLED' || status === 'CANCELLED' ? status : 'PENDING';
+    const order = await db.insertOrder({
+      id, sessionId: sid, symbol, side, orderType,
+      price: price || 0, triggerPrice: triggerPrice ?? price ?? 0,
+      quantity, status: incomingStatus, time: time || Date.now(),
+    });
+    if (incomingStatus === 'FILLED' && typeof fillPrice === 'number' && typeof pnl === 'number') {
+      await db.fillOrder(id, fillPrice, pnl);
+    }
+    res.status(201).json(order);
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/orders', async (req, res) => {
+  try {
+    const sid = req.headers['x-session-id'];
+    res.json(sid ? await db.getOrdersForSession(sid) : await db.getAllOrders());
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/orders/:id', async (req, res) => {
+  try {
+    const order = await db.cancelOrder(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Not found or not pending' });
+    res.json(order);
+  } catch (e) { console.error(e); res.status(500).json({ error: e.message }); }
+});
+
+// ─── WebSocket + Stream Relay ─────────────────────────────────────────────────
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: '/ws' });
 const frontendClients = new Set();
@@ -580,7 +587,6 @@ function broadcastToFrontend(msg) {
   frontendClients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 }
 
-// Crypto Compare WebSocket for real-time prices
 let ccWs = null;
 const ccSubscriptions = new Set();
 const ccPrices = {};
@@ -592,9 +598,8 @@ function connectCCStream() {
       : 'wss://streamer.cryptocompare.com/v2';
     ccWs = new WebSocket(streamUrl);
     ccWs.on('open', () => {
-      if (ccSubscriptions.size > 0) {
+      if (ccSubscriptions.size > 0)
         ccWs.send(JSON.stringify({ action: 'SubAdd', subs: Array.from(ccSubscriptions) }));
-      }
     });
     ccWs.on('message', (msg) => {
       try {
@@ -621,24 +626,19 @@ wss.on('connection', (ws) => {
       const data = JSON.parse(msg.toString());
       if (data.type === 'subscribe') {
         const { symbol = 'btcusdt', stream = 'kline_1m' } = data;
-
-        // Try Binance WS first
         const streamName = `${symbol.toLowerCase()}@${stream}`;
         if (binanceWs) binanceWs.terminate();
         try {
           binanceWs = new WebSocket(`wss://stream.binance.com:9443/ws/${streamName}`);
           binanceWs.on('message', (m) => { if (ws.readyState === WebSocket.OPEN) ws.send(m.toString()); });
           binanceWs.on('error', () => {
-            // Binance failed — subscribe CC
             const fsym = symbol.toUpperCase().replace('USDT', '');
             const sub = `2~Coinbase~${fsym}~USD`;
             ccSubscriptions.add(sub);
-            if (ccWs?.readyState === WebSocket.OPEN) {
+            if (ccWs?.readyState === WebSocket.OPEN)
               ccWs.send(JSON.stringify({ action: 'SubAdd', subs: [sub] }));
-            }
-            if (ws.readyState === WebSocket.OPEN) {
+            if (ws.readyState === WebSocket.OPEN)
               ws.send(JSON.stringify({ type: 'info', message: 'Using CryptoCompare stream' }));
-            }
           });
           binanceWs.on('close', () => {});
         } catch {}
@@ -652,43 +652,67 @@ wss.on('connection', (ws) => {
   });
 });
 
-// ─── Order fill checker ────────────────────────────────────────────────────────
+// ─── Order fill checker (DB-backed) ───────────────────────────────────────────
 setInterval(async () => {
-  const pending = advancedOrders.filter(o => o.status === 'PENDING');
-  if (!pending.length) return;
-  const symbols = [...new Set(pending.map(o => o.symbol))];
-  const prices = {};
-  for (const sym of symbols) prices[sym] = await getCurrentPrice(sym);
+  try {
+    const pending = await db.getPendingOrders();
+    if (!pending.length) return;
+    const symbols = [...new Set(pending.map(o => o.symbol))];
+    const prices = {};
+    for (const sym of symbols) prices[sym] = await getCurrentPrice(sym);
 
-  for (const order of pending) {
-    const currentPrice = prices[order.symbol];
-    if (!currentPrice) continue;
-    let triggered = false;
-    if (order.orderType === 'limit') {
-      if (order.side === 'BUY' && currentPrice <= order.triggerPrice) triggered = true;
-      if (order.side === 'SELL' && currentPrice >= order.triggerPrice) triggered = true;
-    } else if (order.orderType === 'stop') {
-      if (currentPrice <= order.triggerPrice) triggered = true;
-    }
-    if (triggered) {
+    for (const order of pending) {
+      const currentPrice = prices[order.symbol];
+      if (!currentPrice) continue;
+      let triggered = false;
+      const trig = order.triggerPrice ?? order.price;
+      if (order.orderType === 'limit') {
+        if (order.side === 'BUY'  && currentPrice <= trig) triggered = true;
+        if (order.side === 'SELL' && currentPrice >= trig) triggered = true;
+      } else if (order.orderType === 'stop') {
+        if (currentPrice <= trig) triggered = true;
+      }
+      if (!triggered) continue;
+
       const slippage = currentPrice * (Math.random() * 0.001 - 0.0005);
       const fillPrice = parseFloat((currentPrice + slippage).toFixed(8));
       const pnl = parseFloat(((fillPrice - order.price) * order.quantity * (order.side === 'BUY' ? 1 : -1)).toFixed(2));
-      order.status = 'FILLED'; order.fillPrice = fillPrice; order.pnl = pnl; order.filledAt = Date.now();
 
-      // Update wallet
-      if (order.sessionId && virtualWallets[order.sessionId]) {
-        const w = virtualWallets[order.sessionId];
-        w.pnlTotal = parseFloat((w.pnlTotal + pnl).toFixed(2));
-        w.balance = parseFloat((w.balance + pnl).toFixed(2));
-        w.tradesCount++;
-        if (pnl > 0) w.winsCount++;
+      const filled = await db.fillOrder(order.id, fillPrice, pnl);
+      if (order.sessionId) {
+        const wallet = await db.updateWalletPnl(order.sessionId, pnl);
+        broadcastToFrontend({ type: 'wallet_update', sessionId: order.sessionId, wallet });
       }
-
-      broadcastToFrontend({ type: 'order_filled', order });
+      broadcastToFrontend({ type: 'order_filled', order: filled });
       console.log(`Order ${order.id} filled @ ${fillPrice} (PnL: ${pnl})`);
     }
+  } catch (e) {
+    console.error('Fill checker error:', e.message);
   }
-}, 30000);
+}, 5000);
 
-server.listen(PORT, '0.0.0.0', () => console.log(`AlgoTrader backend on port ${PORT}`));
+// ─── Stripe webhook (optional, gracefully handles missing secret) ─────────────
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe || !STRIPE_WEBHOOK_SECRET) return res.status(503).end();
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET);
+  } catch (e) {
+    return res.status(400).send(`Webhook Error: ${e.message}`);
+  }
+  if (event.type === 'payment_intent.succeeded') {
+    const pi = event.data.object;
+    const sid = pi.metadata?.sessionId;
+    const credits = parseFloat(pi.metadata?.virtualCredits || (pi.amount * 10));
+    if (sid && credits > 0) {
+      const updated = await db.markDepositSucceeded(pi.id);
+      if (updated) {
+        const wallet = await db.creditBalance(sid, credits);
+        broadcastToFrontend({ type: 'wallet_update', sessionId: sid, wallet });
+      }
+    }
+  }
+  res.json({ received: true });
+});
+
+server.listen(PORT, '0.0.0.0', () => console.log(`ZEX backend on port ${PORT}`));

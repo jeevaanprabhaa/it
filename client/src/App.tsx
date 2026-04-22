@@ -11,6 +11,7 @@ import WalletBar from './components/WalletBar';
 import DepositModal from './components/DepositModal';
 import AICoachPage from './components/AICoachPage';
 import LeaderboardPage from './components/LeaderboardPage';
+import OrderBookVisualizer from './components/OrderBookVisualizer';
 import { useMarketData } from './hooks/useMarketData';
 import { useIsMobile } from './hooks/useIsMobile';
 import { useSession, apiHeaders } from './hooks/useSession';
@@ -34,7 +35,8 @@ const App: React.FC = () => {
   const [page, setPage] = useState<Page>('terminal');
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
-  const [bottomTab, setBottomTab] = useState<'securities' | 'orders' | 'trades' | 'journal'>('securities');
+  const [bottomTab, setBottomTab] = useState<'securities' | 'orders' | 'trades' | 'journal' | 'history'>('orders');
+  const [rightTab, setRightTab] = useState<'orderbook' | 'trades'>('orderbook');
   const [mobileTab, setMobileTab] = useState<MobileTab>('charts');
   const [showMobileBuySell, setShowMobileBuySell] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
@@ -53,6 +55,19 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Hydrate orders from server on mount so history persists across reloads
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await fetch('/api/orders', { headers: apiHeaders(sessionId) });
+        if (r.ok) {
+          const data = await r.json();
+          if (Array.isArray(data)) setOrders(data);
+        }
+      } catch {}
+    })();
+  }, [sessionId]);
+
   useEffect(() => {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
     let ws: WebSocket;
@@ -62,6 +77,9 @@ const App: React.FC = () => {
       ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data);
+          if (msg.type === 'wallet_update') {
+            setWalletRefresh(n => n + 1);
+          }
           if (msg.type === 'order_filled' && msg.order) {
             const filled: Order = { ...msg.order, status: 'FILLED' };
             setOrders(prev => {
@@ -101,6 +119,11 @@ const App: React.FC = () => {
         setJournalOrder(filledOrder);
         setJournalKey(k => k + 1);
         try {
+          await fetch('/api/orders', {
+            method: 'POST',
+            headers: apiHeaders(sessionId),
+            body: JSON.stringify({ ...filledOrder, status: 'FILLED' }),
+          });
           await fetch('/api/wallet/update-pnl', {
             method: 'POST',
             headers: apiHeaders(sessionId),
@@ -252,99 +275,238 @@ const App: React.FC = () => {
   }
 
   // ── Desktop Layout ───────────────────────────────────────────────────────────
-  const desktopBottomTabs = ['securities', 'orders', 'trades', 'journal'] as const;
-  const chartIntervals = ['1m', '5m', '1h', '4h', '1d'];
+  const desktopBottomTabs = ['orders', 'history', 'securities', 'journal'] as const;
+  const chartIntervals = ['5y', '1y', '6m', '3m', '1m', '5d', '1d'];
   const tabLabel = (t: typeof desktopBottomTabs[number]) => {
-    if (t === 'journal') return '📓 Journal';
+    if (t === 'journal') return 'Journal';
+    if (t === 'history') return 'History';
+    if (t === 'securities') return 'Markets';
     return t.charAt(0).toUpperCase() + t.slice(1);
   };
-  const formatMarketValue = (value?: string, maximumFractionDigits = 4) =>
+  const formatMarketValue = (value?: string, maximumFractionDigits = 2) =>
     value ? parseFloat(value).toLocaleString(undefined, { maximumFractionDigits }) : '—';
+  const baseAsset = symbol.replace('USDT', '');
+  const quoteAsset = symbol.endsWith('USDT') ? 'USDT' : symbol.slice(-3);
+  const tokenColor = (s: string) => {
+    if (s === 'BTC' || s === 'WBTC') return '#F7931A';
+    if (s === 'ETH') return '#627EEA';
+    if (s === 'USDT' || s === 'USDC') return '#26A17B';
+    if (s === 'SOL') return '#9945FF';
+    if (s === 'BNB') return '#F3BA2F';
+    return '#16C784';
+  };
+  const networkOf = (s: string) => {
+    if (s === 'BTC') return 'Bitcoin';
+    if (s === 'ETH') return 'Ethereum';
+    if (s === 'USDT' || s === 'USDC') return 'Holesky';
+    if (s === 'SOL') return 'Solana';
+    if (s === 'BNB') return 'BSC';
+    return 'Network';
+  };
+
+  const PairChip: React.FC<{ asset: string }> = ({ asset }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+      <span style={{
+        width: 32, height: 32, borderRadius: '50%',
+        background: tokenColor(asset),
+        color: '#fff', fontSize: 13, fontWeight: 800,
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      }}>{asset.slice(0, 1)}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+        <span style={{ fontSize: 14, fontWeight: 800, color: '#FFFFFF' }}>{asset}</span>
+        <span style={{ fontSize: 10, color: '#6B7494' }}>on {networkOf(asset)}</span>
+      </div>
+    </div>
+  );
+
   const marketStats = [
-    { label: 'Market Price', value: formatMarketValue(ticker?.lastPrice, 6), color: '#E8EAF2', large: true },
-    { label: '24h Change', value: `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`, color: change >= 0 ? '#00C896' : '#E5534B' },
-    { label: '24h High', value: formatMarketValue(ticker?.highPrice), color: '#E8EAF2' },
-    { label: '24h Low', value: formatMarketValue(ticker?.lowPrice), color: '#E8EAF2' },
-    { label: '24h Volume', value: formatMarketValue(ticker?.volume, 0), color: '#E8EAF2' },
+    { label: '24h Change', value: `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`, color: change >= 0 ? '#16C784' : '#F0616D' },
+    { label: '24h High',   value: formatMarketValue(ticker?.highPrice), color: '#EAEEF7' },
+    { label: '24h Low',    value: formatMarketValue(ticker?.lowPrice),  color: '#EAEEF7' },
+    { label: '24h Volume', value: ticker ? '$' + (parseFloat(ticker.quoteVolume || ticker.volume) >= 1e6 ? (parseFloat(ticker.quoteVolume || ticker.volume) / 1e6).toFixed(2) + 'M' : (parseFloat(ticker.quoteVolume || ticker.volume) / 1e3).toFixed(2) + 'K') : '—', color: '#EAEEF7' },
   ];
 
+  // Drawing tools sidebar icons
+  const drawTools = ['+', '✦', '⌖', '⊟', '✎', '◇', 'T', '⛌', '✂', '🔍', '⚲'];
+
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#070A12', color: '#EAEEF7' }}>
       <WalletBar key={walletRefresh} sessionId={sessionId} onDeposit={() => setShowDeposit(true)} activeSection="trade" onNavigateTrade={() => setPage('terminal')} onNavigateDashboard={() => setPage('leaderboard')} />
 
-      <div style={{ display: 'flex', alignItems: 'stretch', background: '#161B27', borderBottom: '1px solid #232A3E', flexShrink: 0, minHeight: 58, overflowX: 'auto' }}>
-        {marketStats.map(stat => (
-          <div key={stat.label} style={{ minWidth: stat.large ? 190 : 138, padding: '10px 18px', borderRight: '1px solid #232A3E', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 5, fontVariantNumeric: 'tabular-nums' }}>
-            <span style={{ color: '#6B7599', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: 1 }}>{stat.label}</span>
-            <span style={{ color: stat.color, fontSize: stat.large ? 20 : 13, fontWeight: stat.large ? 800 : 700, lineHeight: 1 }}>{stat.value}</span>
-          </div>
-        ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', borderLeft: '1px solid #232A3E', flexShrink: 0 }}>
-          {isDemo && <span style={{ padding: '2px 8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 12, fontSize: 10, color: 'var(--accent)' }}>DEMO</span>}
-          <select value={symbol} onChange={e => setSymbol(e.target.value)} style={{ background: '#1C2236', color: '#E8EAF2', border: '1px solid #232A3E', borderRadius: 8, padding: '7px 10px', fontSize: 12, fontVariantNumeric: 'tabular-nums' }}>
+      {/* Pair selector strip */}
+      <div style={{ display: 'flex', alignItems: 'center', background: '#0A0F1C', borderBottom: '1px solid #131A2B', flexShrink: 0, minHeight: 64, padding: '0 16px', gap: 18, overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <PairChip asset={baseAsset} />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#6B7494', flexShrink: 0 }}><path d="M7 7h10l-3 -3 M17 17H7l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <PairChip asset={quoteAsset} />
+          <select
+            value={symbol}
+            onChange={e => setSymbol(e.target.value)}
+            style={{
+              background: '#131A2B', color: '#EAEEF7', border: '1px solid #1A2238',
+              borderRadius: 8, padding: '6px 8px', fontSize: 11, marginLeft: 4, cursor: 'pointer',
+            }}
+          >
             {SYMBOLS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <button onClick={() => setPage('heatmap')} style={{ background: '#1C2236', border: '1px solid #232A3E', borderRadius: 8, color: '#6B7599', padding: '7px 12px', cursor: 'pointer', fontSize: 12 }}>Market Heatmap</button>
+        </div>
+
+        <div style={{ width: 1, height: 32, background: '#131A2B', flexShrink: 0 }} />
+
+        {/* Market price + sparkline */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ color: '#6B7494' }}><path d="M21 12a9 9 0 1 1-9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M21 3v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontSize: 10, color: '#6B7494', fontWeight: 600, letterSpacing: '0.04em' }}>Market Price</span>
+            <span style={{ fontSize: 17, color: '#EAEEF7', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{formatMarketValue(ticker?.lastPrice)}</span>
+          </div>
+          <svg width="78" height="34" viewBox="0 0 78 34" preserveAspectRatio="none">
+            <path d="M0,22 L10,18 L20,24 L28,14 L38,16 L48,8 L58,12 L66,6 L78,10" fill="none" stroke={change >= 0 ? '#16C784' : '#F0616D'} strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+        </div>
+
+        {marketStats.map(stat => (
+          <div key={stat.label} style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, gap: 4, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ color: '#6B7494', fontSize: 10, fontWeight: 600, letterSpacing: '0.04em' }}>{stat.label}</span>
+            <span style={{ color: stat.color, fontSize: 13, fontWeight: 700 }}>{stat.value}</span>
+          </div>
+        ))}
+
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {isDemo && <span style={{ padding: '2px 8px', background: 'rgba(22,199,132,0.14)', border: '1px solid #16C784', borderRadius: 12, fontSize: 10, color: '#16C784', fontWeight: 700 }}>DEMO</span>}
+          <button onClick={() => setRightTab('orderbook')} style={{ background: rightTab === 'orderbook' ? 'transparent' : 'transparent', border: 0, borderBottom: rightTab === 'orderbook' ? '2px solid #FFFFFF' : '2px solid transparent', color: rightTab === 'orderbook' ? '#FFFFFF' : '#6B7494', padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Order Book</button>
+          <button onClick={() => setRightTab('trades')} style={{ background: 'transparent', border: 0, borderBottom: rightTab === 'trades' ? '2px solid #FFFFFF' : '2px solid transparent', color: rightTab === 'trades' ? '#FFFFFF' : '#6B7494', padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>Trades</button>
         </div>
       </div>
 
+      {/* Main 3-column area */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
-        <div style={{ width: 300, flexShrink: 0 }}>
-          <OrderPanel symbol={symbol} lastPrice={ticker?.lastPrice} orders={orders} onPlaceOrder={handlePlaceOrder} onCancelOrder={handleCancelOrder} />
+        {/* Left: Order panel + portfolio */}
+        <div style={{ width: 304, flexShrink: 0, borderRight: '1px solid #131A2B' }}>
+          <OrderPanel
+            symbol={symbol}
+            lastPrice={ticker?.lastPrice}
+            orders={orders}
+            onPlaceOrder={handlePlaceOrder}
+            onCancelOrder={handleCancelOrder}
+            sessionId={sessionId}
+            walletRefresh={walletRefresh}
+            onDeposit={() => setShowDeposit(true)}
+          />
         </div>
+
+        {/* Center: Chart + bottom orders */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#0E1117' }}>
-            <div style={{ height: 40, background: '#161B27', borderBottom: '1px solid #232A3E', display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', flexShrink: 0 }}>
-              {chartIntervals.map(iv => (
-                <button
-                  key={iv}
-                  onClick={() => setInterval(iv)}
-                  style={{
-                    height: 24,
-                    padding: '0 10px',
-                    border: '1px solid #232A3E',
-                    borderRadius: 999,
-                    cursor: 'pointer',
-                    background: interval === iv ? '#232A3E' : '#1C2236',
-                    color: interval === iv ? '#E8EAF2' : '#6B7599',
-                    fontSize: 11,
-                    fontWeight: interval === iv ? 700 : 600,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {iv}
-                </button>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'row', background: '#070A12' }}>
+            {/* Drawing tools sidebar */}
+            <div style={{ width: 36, borderRight: '1px solid #131A2B', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '8px 0', flexShrink: 0, background: '#0A0F1C' }}>
+              {drawTools.map((t, i) => (
+                <button key={i} style={{
+                  width: 28, height: 28, background: 'transparent',
+                  border: 0, borderRadius: 6, color: '#6B7494', cursor: 'pointer',
+                  fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{t}</button>
               ))}
             </div>
-            <div style={{ flex: 1, minHeight: 0, background: '#0E1117' }}>
-              <Chart klines={klines} symbol={symbol} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              {/* Chart toolbar */}
+              <div style={{ height: 40, background: '#0A0F1C', borderBottom: '1px solid #131A2B', display: 'flex', alignItems: 'center', gap: 14, padding: '0 12px', flexShrink: 0, fontSize: 11, color: '#6B7494' }}>
+                <span style={{ color: '#EAEEF7', fontWeight: 700, fontSize: 12 }}>{baseAsset}/{quoteAsset}</span>
+                <span>1</span>
+                <span style={{ color: '#16C784' }}>● ZEX</span>
+                <span style={{ marginLeft: 12, fontSize: 11 }}>
+                  <span style={{ color: '#6B7494' }}>O </span><span style={{ color: '#EAEEF7' }}>{formatMarketValue(ticker?.lastPrice)}</span>
+                  <span style={{ color: '#6B7494', marginLeft: 8 }}>H </span><span style={{ color: '#EAEEF7' }}>{formatMarketValue(ticker?.highPrice)}</span>
+                  <span style={{ color: '#6B7494', marginLeft: 8 }}>L </span><span style={{ color: '#EAEEF7' }}>{formatMarketValue(ticker?.lowPrice)}</span>
+                  <span style={{ color: '#6B7494', marginLeft: 8 }}>C </span><span style={{ color: '#EAEEF7' }}>{formatMarketValue(ticker?.lastPrice)}</span>
+                  <span style={{ color: change >= 0 ? '#16C784' : '#F0616D', marginLeft: 8 }}>({change >= 0 ? '+' : ''}{change.toFixed(2)}%)</span>
+                </span>
+                <span style={{ marginLeft: 'auto', color: '#6B7494' }}>⚙ ◳ ⛶</span>
+              </div>
+
+              <div style={{ flex: 1, minHeight: 0, background: '#070A12', position: 'relative' }}>
+                <Chart klines={klines} symbol={symbol} />
+                {/* Time-frame chips overlaid bottom */}
+                <div style={{ position: 'absolute', left: 12, bottom: 8, display: 'flex', gap: 6, alignItems: 'center', zIndex: 10 }}>
+                  {chartIntervals.map(iv => {
+                    // Map ZEX-style interval to our intervals
+                    const map: Record<string, string> = { '5y': '1d', '1y': '1d', '6m': '1d', '3m': '4h', '1m': '1h', '5d': '15m', '1d': '5m' };
+                    const apiIv = map[iv] || '5m';
+                    const active = interval === apiIv;
+                    return (
+                      <button
+                        key={iv}
+                        onClick={() => setInterval(apiIv)}
+                        style={{
+                          height: 22, padding: '0 10px',
+                          border: 0, borderRadius: 999, cursor: 'pointer',
+                          background: active ? '#1A2238' : 'transparent',
+                          color: active ? '#FFFFFF' : '#6B7494',
+                          fontSize: 11, fontWeight: 700, fontVariantNumeric: 'tabular-nums',
+                        }}
+                      >{iv}</button>
+                    );
+                  })}
+                </div>
+                <div style={{ position: 'absolute', right: 12, bottom: 8, display: 'flex', gap: 8, color: '#6B7494', fontSize: 10, zIndex: 10 }}>
+                  <span>%</span><span>LOG</span><span>AUTO</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div style={{ height: 265, borderTop: '1px solid var(--border)', background: 'var(--bg-panel)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+
+          {/* Bottom: Orders / History */}
+          <div style={{ height: 250, borderTop: '1px solid #131A2B', background: '#0A0F1C', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid #131A2B', flexShrink: 0, padding: '0 4px' }}>
               {desktopBottomTabs.map(tab => (
-                <button key={tab} onClick={() => setBottomTab(tab)} style={{ padding: '6px 14px', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 12, background: bottomTab === tab ? 'var(--bg-hover)' : 'var(--bg-card)', color: bottomTab === tab ? 'var(--text-primary)' : 'var(--text-muted)', borderBottom: bottomTab === tab ? '2px solid var(--accent)' : '2px solid var(--border)', whiteSpace: 'nowrap', position: 'relative' }}>
+                <button
+                  key={tab}
+                  onClick={() => setBottomTab(tab as any)}
+                  style={{
+                    padding: '11px 20px',
+                    border: 0,
+                    background: 'transparent',
+                    color: bottomTab === (tab as any) ? '#FFFFFF' : '#6B7494',
+                    borderBottom: bottomTab === (tab as any) ? '2px solid #FFFFFF' : '2px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {tabLabel(tab)}
                   {tab === 'orders' && pendingCount > 0 && (
-                    <span style={{ marginLeft: 5, padding: '1px 5px', background: 'var(--accent)', borderRadius: 8, fontSize: 10, color: 'var(--bg-base)', fontWeight: 700 }}>{pendingCount}</span>
+                    <span style={{ marginLeft: 6, padding: '1px 6px', background: '#16C784', borderRadius: 8, fontSize: 10, color: '#070A12', fontWeight: 700 }}>{pendingCount}</span>
                   )}
                 </button>
               ))}
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', padding: '0 10px' }}>
-                <button onClick={() => setPage('coach')} style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--accent)', padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>🤖 AI Coach</button>
-                <button onClick={() => setPage('leaderboard')} style={{ background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--accent)', padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>🏆 Board</button>
+                <button onClick={() => setPage('coach')} style={{ background: 'transparent', border: '1px solid #1A2238', borderRadius: 8, color: '#16C784', padding: '5px 12px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>AI Coach</button>
+                <button onClick={() => setPage('leaderboard')} style={{ background: 'transparent', border: '1px solid #1A2238', borderRadius: 8, color: '#16C784', padding: '5px 12px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>Leaderboard</button>
+                <button onClick={() => setPage('heatmap')} style={{ background: 'transparent', border: '1px solid #1A2238', borderRadius: 8, color: '#8C95B5', padding: '5px 12px', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>Heatmap</button>
               </div>
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
+              {bottomTab === 'orders' && <DesktopOrdersTable orders={orders.filter(o => o.status === 'OPEN' || o.status === 'PENDING')} onCancel={handleCancelOrder} />}
+              {(bottomTab as string) === 'history' && <DesktopOrdersTable orders={orders.filter(o => o.status === 'FILLED' || o.status === 'CANCELLED')} onCancel={handleCancelOrder} />}
               {bottomTab === 'securities' && <SecuritiesTable selectedSymbol={symbol} onSelectSymbol={setSymbol} />}
               {bottomTab === 'trades' && <TradesPanel trades={trades} />}
-              {bottomTab === 'orders' && <DesktopOrdersTable orders={orders} onCancel={handleCancelOrder} />}
               {bottomTab === 'journal' && <JournalTab key={journalKey} />}
             </div>
           </div>
         </div>
-        <div style={{ width: 240, borderLeft: '1px solid var(--border)', flexShrink: 0 }}>
-          <OrderBook orderBook={orderBook} lastPrice={ticker?.lastPrice} />
+
+        {/* Right: Order Book + Visualizer */}
+        <div style={{ width: 280, borderLeft: '1px solid #131A2B', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: '1 1 60%', minHeight: 0, overflow: 'hidden', borderBottom: '1px solid #131A2B' }}>
+            {rightTab === 'orderbook'
+              ? <OrderBook orderBook={orderBook} lastPrice={ticker?.lastPrice} baseAsset={baseAsset} quoteAsset={quoteAsset} />
+              : <TradesPanel trades={trades} />
+            }
+          </div>
+          <div style={{ flex: '0 0 40%', minHeight: 0, overflow: 'hidden' }}>
+            <OrderBookVisualizer orderBook={orderBook} />
+          </div>
         </div>
       </div>
 

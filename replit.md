@@ -86,4 +86,6 @@ Starts: Express backend (port 3001) + Vite dev server (port 5000)
 - CryptoCompare API is free-tier (no API key needed for basic endpoints)
 - Session IDs stored in localStorage — wallet resets if localStorage is cleared
 - Advanced orders and journal entries are in-memory (reset on server restart)
-- For production: add PostgreSQL to persist wallets, orders, journal entries
+- PostgreSQL persistence (Replit built-in DB via `pg`): wallets, orders, journal_entries, deposits — see `server/db.js`. Schema auto-created.
+- Real-time fill checker now polls every 5s against pending DB orders and broadcasts `order_filled` + `wallet_update` over WS.
+- Deposit flow verifies the PaymentIntent server-side via Stripe before crediting; idempotent via `deposits.payment_intent_id` UNIQUE.
